@@ -4,9 +4,9 @@ import com.alibaba.datax.common.element.Record;
 import com.alibaba.datax.common.plugin.TaskPluginCollector;
 import com.alibaba.datax.common.util.Configuration;
 import org.apache.hadoop.fs.Path;
-import parquet.hadoop.ParquetWriter;
-import parquet.hadoop.metadata.CompressionCodecName;
-import parquet.schema.MessageType;
+import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.apache.parquet.schema.MessageType;
 
 import java.io.IOException;
 

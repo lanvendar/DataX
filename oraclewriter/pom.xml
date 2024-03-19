@@ -37,11 +37,11 @@
 			<artifactId>plugin-rdbms-util</artifactId>
 			<version>${datax-project-version}</version>
 		</dependency>
-
+		<!-- [dataX源码修改] oracle jdbc 版本调整 -->
 		<dependency>
-			<groupId>com.oracle</groupId>
-			<artifactId>ojdbc6</artifactId>
-			<version>11.2.0.3</version>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc8</artifactId>
+			<version>23.2.0.0</version>
 		</dependency>
 
 	</dependencies>
