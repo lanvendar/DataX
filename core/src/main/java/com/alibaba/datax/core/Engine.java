@@ -24,7 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -197,6 +199,13 @@ public class Engine {
 
     public static void main(String[] args) throws Exception {
         int exitCode = 0;
+        System.setProperty("HADOOP_USER_HOME", "hadoop");
+        if (args.length == 0) {
+            UUID uuid = UUID.randomUUID();
+            String baseDir = "/bdmm/plugin/datax/cache";
+            args = new String[] {"-job", baseDir + "/job/test.json", "-jobid", uuid.toString()};
+        }
+        
         try {
             Engine.entry(args);
         } catch (Throwable e) {

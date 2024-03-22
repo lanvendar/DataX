@@ -132,6 +132,8 @@
         <!--<module>gaussdbreader</module>
         <module>gaussdbwriter</module>
         <module>datax-example</module>-->
+        <!-- [dataX源码修改] 增加自定义集合打包模块 -->
+        <module>packaging/datax-bundle</module>
 
     </modules>
 
@@ -272,19 +274,12 @@
         </resources>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
                 <configuration>
                     <finalName>datax</finalName>
                     <descriptors>
                         <descriptor>package.xml</descriptor>
                     </descriptors>
-                    <!--打包解压后的目录名；${project.artifactId}是指：项目的artifactId-->
-                    <finalName>${project.artifactId}</finalName>
-                    <!-- 打包压缩包位置-->
-                    <outputDirectory>${project.build.directory}/release</outputDirectory>
-                    <encoding>${project-sourceEncoding}</encoding>
                 </configuration>
                 <executions>
                     <execution>
@@ -293,35 +288,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- 打包jar文件时，配置manifest文件，加入lib包的jar依赖 -->
-            <!--<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <finalName>datax-core-1.0.0</finalName>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.alibaba.datax.core.Engine</mainClass>
-                        </manifest>
-                    </archive>
-                    &lt;!&ndash;设置JAR包输出目录 &ndash;&gt;
-                    <outputDirectory>${project.build.directory}</outputDirectory>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

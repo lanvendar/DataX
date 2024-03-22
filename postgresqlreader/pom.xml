@@ -61,9 +61,8 @@
                     <encoding>${project-sourceEncoding}</encoding>
                 </configuration>
             </plugin>
-            <!-- [dataX源码修改] 打成一个jar包,已在父pom配置,此处去除 -->
             <!-- assembly plugin -->
-            <!--<plugin>
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <descriptors>
@@ -80,7 +79,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
         </plugins>
     </build>
 
