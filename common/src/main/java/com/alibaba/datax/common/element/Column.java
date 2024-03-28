@@ -70,8 +70,8 @@ public abstract class Column {
 	public String toString() {
 		return JSON.toJSONString(this);
 	}
-
+	// [dataX源码修改]:扩展 UUID 类型
 	public enum Type {
-		BAD, NULL, INT, LONG, DOUBLE, STRING, BOOL, DATE, BYTES
+		BAD, NULL, INT, LONG, DOUBLE, STRING, BOOL, DATE, UUID, BYTES
 	}
 }

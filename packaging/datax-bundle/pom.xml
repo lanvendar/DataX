@@ -156,246 +156,67 @@
             <version>27.0-jre</version>
         </dependency>
         <dependency>
-            <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
-            <version>3.7.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!--<dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+            <version>3.3.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-            <version>3.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.9</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.fastjson2</groupId>
-            <artifactId>fastjson2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>16.0.1</version>
-        </dependency>
-        &lt;!&ndash;<dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>r05</version>
-        </dependency>&ndash;&gt;
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid</artifactId>
-            <version>1.0.15</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-            <version>3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
-            <version>${commons-configuration-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-cli</groupId>
-            <artifactId>commons-cli</artifactId>
-            <version>${commons-cli-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-            <version>1.9.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-            <version>4.4.13</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>fluent-hc</artifactId>
-            <version>4.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.janino</groupId>
-            <artifactId>janino</artifactId>
-            <version>2.5.16</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>2.1.9</version>
-        </dependency>
-        <dependency>
-            <groupId>net.sourceforge.javacsv</groupId>
-            <artifactId>javacsv</artifactId>
-            <version>2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.anarres.lzo</groupId>
-            <artifactId>lzo-core</artifactId>
-            <version>1.0.5</version>
-        </dependency>
-        <dependency>
-            <groupId>io.airlift</groupId>
-            <artifactId>aircompressor</artifactId>
-            <version>0.3</version>
-        </dependency>
-        &lt;!&ndash; cassandra &ndash;&gt;
-        <dependency>
-            <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
-            <version>3.7.2</version>
-            <classifier>shaded</classifier>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.9</version>
-        </dependency>
-        &lt;!&ndash; hdfs &ndash;&gt;
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-hdfs</artifactId>
-            <version>${hadoop.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <version>${hadoop.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-common</artifactId>
-            <version>${hadoop.version}</version>
-        </dependency>
-        &lt;!&ndash;<dependency>
-            <groupId>com.aliyun.oss</groupId>
-            <artifactId>hadoop-aliyun</artifactId>
-            <version>2.7.2</version>
-        </dependency>&ndash;&gt;
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-mapreduce-client-core</artifactId>
-            <version>${hadoop.version}</version>
-        </dependency>
-        &lt;!&ndash; hive &ndash;&gt;
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>${hive.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-serde</artifactId>
-            <version>${hive.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-service</artifactId>
-            <version>${hive.version}</version>
             <exclusions>
                 <exclusion>
-                    <artifactId>jdk.tools</artifactId>
-                    <groupId>jdk.tools</groupId>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-1.2-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-hdfs</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.sf.opencsv</groupId>
+                    <artifactId>opencsv</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.parquet</groupId>
+                    <artifactId>parquet-column</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-common</artifactId>
-            <version>${hive.version}</version>
+            <groupId>com.datastax.cassandra</groupId>
+            <artifactId>cassandra-driver-core</artifactId>
+            <version>3.7.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.hive.hcatalog</groupId>
-            <artifactId>hive-hcatalog-core</artifactId>
-            <version>${hive.version}</version>
-        </dependency>
-        &lt;!&ndash; parquet &ndash;&gt;
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-column</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-avro</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-common</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-format-structures</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-jackson</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-encoding</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-hadoop</artifactId>
-            <version>${parquet.version}</version>
-        </dependency>
-        &lt;!&ndash; kingbase &ndash;&gt;
+        <!-- kingbase -->
         <dependency>
             <groupId>cn.com.kingbase</groupId>
             <artifactId>kingbase8</artifactId>
             <version>8.6.0</version>
         </dependency>
+        <!--
         &lt;!&ndash; dm7 dm8 driver &ndash;&gt;
         <dependency>
             <groupId>com.dameng</groupId>
@@ -466,15 +287,15 @@
                                 <!-- 添加资源文件 -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                     <resource>conf/core.json</resource>
-                                    <file>${basedir}../../core/src/main/conf/core.json</file>
+                                    <file>../../core/src/main/conf/core.json</file>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                     <resource>conf/logback.xml</resource>
-                                    <file>${basedir}../../core/src/main/conf/logback.xml</file>
+                                    <file>../../core/src/main/conf/logback.xml</file>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                     <resource>conf/.secret.properties</resource>
-                                    <file>${basedir}../../core/src/main/conf/.secret.properties</file>
+                                    <file>../../core/src/main/conf/.secret.properties</file>
                                 </transformer>
                             </transformers>
                             
@@ -585,8 +406,8 @@
                                     <include>javax.servlet:javax.servlet-api</include>
                                     <include>io.netty:netty</include>
                                     <include>io.netty:netty-all</include>
-                                    <include>io.netty:netty-buffer</include>
-                                    <include>io.netty:netty-common</include>
+                                    <!--<include>io.netty:netty-buffer</include>
+                                    <include>io.netty:netty-common</include>-->
                                     <include>org.apache.htrace:htrace-core4</include>
                                     <include>org.fusesource.leveldbjni:leveldbjni-all</include>
                                     <include>com.fasterxml.jackson.core:jackson-databind</include>
@@ -624,7 +445,7 @@
                                     <include>org.apache.hive:hive-common</include>
                                     <include>org.apache.hive:hive-classification</include>
                                     <include>org.apache.hive:hive-storage-api</include>
-                                    <include>org.apache.hive:hive-llap-client</include>
+                                    <!--<include>org.apache.hive:hive-llap-client</include>-->
                                     <include>org.apache.hive:hive-llap-common</include>
                                     <include>org.apache.hive:hive-serde</include>
                                     <include>org.apache.hive:hive-shims</include>
@@ -636,7 +457,7 @@
                                     <include>oro:oro</include>
                                     <include>org.apache.orc:orc-core</include>
                                     <include>org.apache.orc:orc-shims</include>
-                                    <include>org.apache.parquet:parquet-hadoop-bundle</include>
+                                    <!--<include>org.apache.parquet:parquet-hadoop-bundle</include>-->
                                     <include>org.apache.parquet:parquet-column</include>
                                     <include>org.apache.parquet:parquet-avro</include>
                                     <include>org.apache.parquet:parquet-common</include>

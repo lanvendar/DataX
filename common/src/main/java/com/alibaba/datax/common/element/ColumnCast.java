@@ -36,7 +36,11 @@ public final class ColumnCast {
 	public static String date2String(final DateColumn column) {
 		return DateCast.asString(column);
 	}
-
+	
+	// [dataX源码修改]:扩展 UUID 类型
+	public static byte[] uuid2Bytes(final UuidColumn column) throws UnsupportedEncodingException {
+		return StringCast.asBytes(column);
+	}
 	public static String bytes2String(final BytesColumn column)
 			throws UnsupportedEncodingException {
 		return BytesCast.asString(column);
@@ -130,7 +134,14 @@ class StringCast {
 		}
 		throw e;
 	}
-
+	// [dataX源码修改]:扩展 UUID 类型
+	static byte[] asBytes(final UuidColumn column) throws UnsupportedEncodingException {
+		if (null == column.asString()) {
+			return null;
+		}
+		
+		return column.asString().getBytes(StringCast.encoding);
+	}
 	static byte[] asBytes(final StringColumn column)
 			throws UnsupportedEncodingException {
 		if (null == column.asString()) {

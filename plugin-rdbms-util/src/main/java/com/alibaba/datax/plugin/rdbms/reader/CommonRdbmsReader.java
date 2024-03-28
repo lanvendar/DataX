@@ -7,6 +7,7 @@ import com.alibaba.datax.common.element.DoubleColumn;
 import com.alibaba.datax.common.element.LongColumn;
 import com.alibaba.datax.common.element.Record;
 import com.alibaba.datax.common.element.StringColumn;
+import com.alibaba.datax.common.element.UuidColumn;
 import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.common.plugin.RecordSender;
 import com.alibaba.datax.common.plugin.TaskPluginCollector;
@@ -323,7 +324,21 @@ public class CommonRdbmsReader {
                         }
                         record.addColumn(new StringColumn(stringData));
                         break;
-
+                     // [dataX源码修改]:扩展 uuid|json|jsonb 类型
+                    case Types.OTHER:
+                        String columnTypeName = metaData.getColumnTypeName(i);
+                        if ("uuid".equals(columnTypeName)) {
+                            record.addColumn(new UuidColumn(rs.getObject(i)));
+                        } else if ("json".equals(columnTypeName)) {
+                            record.addColumn(new StringColumn(rs.getString(i)));
+                        } else if ("jsonb".equals(columnTypeName)) {
+                            record.addColumn(new StringColumn(rs.getString(i)));
+                        } else {
+                            throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, String.format(
+                                    "您的配置文件中的列配置信息有误. 因为DataX 不支持数据库读取这种字段类型. 字段名:[%s], 字段名称:[%s], 字段Java类型:[%s]. ",
+                                    metaData.getColumnName(i), metaData.getColumnType(i), metaData.getColumnClassName(i)));
+                        }
+                        break;
                     default:
                         throw DataXException
                                 .asDataXException(
