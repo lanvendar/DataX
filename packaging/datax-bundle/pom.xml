@@ -250,16 +250,8 @@
     </dependencies>
     
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/java</directory>
-                <includes>
-                    <include>**/*.properties</include>
-                </includes>
-            </resource>
-        </resources>
         <plugins>
-            <!-- 此插件必须放在父 POM 中  -->
+            <!-- 集成打包 maven-shade-plugin 插件配置  -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -271,21 +263,23 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <!-- 设置最终生成的JAR文件名 -->
+                            <finalName>datax-bundle-0.0.1</finalName>
                             <!-- 是否在构建过程中创建包含源代码的 JAR 文件 -->
                             <!--<createSourcesJar>true</createSourcesJar>-->
                             <!-- 简化的最小依赖 pom 生成路径 -->
                             <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
                             <!-- 设置将依赖整合到一个自定义名称的 JAR 包,如果不设置此项,依赖将整合到 Maven 无插件时的默认 JAR 包,并生成一个前缀为 original- 的无依赖 JAR 包 -->
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
                             <!-- 设置生成的 JAR 包后缀名 -->
-                            <shadedClassifierName>shaded</shadedClassifierName>
+                            <!--<shadedClassifierName>shaded</shadedClassifierName>-->
                             <transformers>
                                 <!-- 设置程序运行入口 -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.alibaba.datax.core.Engine</mainClass>
                                 </transformer>
-                                <!-- 添加资源文件 -->
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                                <!-- 添加资源文件至jar包 -->
+                                <!--<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                     <resource>conf/core.json</resource>
                                     <file>../../core/src/main/conf/core.json</file>
                                 </transformer>
@@ -296,11 +290,11 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                     <resource>conf/.secret.properties</resource>
                                     <file>../../core/src/main/conf/.secret.properties</file>
-                                </transformer>
+                                </transformer>-->
                             </transformers>
-                            
+                    
                             <!-- 设置 JAR 包输出目录 -->
-                            <outputDirectory>${project.build.directory}/datax</outputDirectory>
+                            <outputDirectory>${project.build.directory}/datax/lib</outputDirectory>
                             <artifactSet>
                                 <includes>
                                     <!-- 核心模块 -->
@@ -329,7 +323,7 @@
                                     <include>com.alibaba.datax:sqlserverwriter</include>
                                     <include>com.alibaba.datax:txtfilereader</include>
                                     <include>com.alibaba.datax:txtfilewriter</include>
-                                    
+                            
                                     <!-- 依赖导入 -->
                                     <include>commons-configuration:commons-configuration</include>
                                     <include>org.apache.commons:commons-configuration2</include>
@@ -582,6 +576,88 @@
                                     <shadedPattern>org.apache.hudi.org.apache.spark.sql.avro.</shadedPattern>
                                 </relocation>
                             </relocations>-->
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>add-conf-files</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/datax"/>
+                                <mkdir dir="${project.build.directory}/datax/conf"/>
+                                
+                                <!-- 生成核心配置文件 -->
+                                <copy todir="${project.build.directory}/datax/conf">
+                                    <fileset dir="../../../core/src/main/conf">
+                                        <include name="*.*" />
+                                    </fileset>
+                                </copy>
+                                <!-- 测试job任务 -->
+                                <copy file="../../../core/src/main/job/job.json" tofile="${project.build.directory}/datax/tmp/test_job.json" />
+                                <!-- 生成插件配置文件 -->
+                                <!-- cassandra -->
+                                <copy file="../../../cassandrareader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/cassandrareader/plugin.json" />
+                                <copy file="../../../cassandrareader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/cassandrareader/plugin_job_template.json" />
+                                <copy file="../../../cassandrawriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/cassandrawriter/plugin.json" />
+                                <copy file="../../../cassandrawriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/cassandrawriter/plugin_job_template.json" />
+                                <!-- hdfs -->
+                                <copy file="../../../hdfsreader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/hdfsreader/plugin.json" />
+                                <copy file="../../../hdfsreader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/hdfsreader/plugin_job_template.json" />
+                                <copy file="../../../hdfswriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/hdfswriter/plugin.json" />
+                                <copy file="../../../hdfswriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/hdfswriter/plugin_job_template.json" />
+                                <!-- kingbasees -->
+                                <copy file="../../../kingbaseesreader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/kingbaseesreader/plugin.json" />
+                                <copy file="../../../kingbaseesreader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/kingbaseesreader/plugin_job_template.json" />
+                                <copy file="../../../kingbaseeswriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/kingbaseeswriter/plugin.json" />
+                                <copy file="../../../kingbaseeswriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/kingbaseeswriter/plugin_job_template.json" />
+                                <!-- mysql -->
+                                <copy file="../../../mysqlreader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/mysqlreader/plugin.json" />
+                                <copy file="../../../mysqlreader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/mysqlreader/plugin_job_template.json" />
+                                <copy file="../../../mysqlwriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/mysqlwriter/plugin.json" />
+                                <copy file="../../../mysqlwriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/mysqlwriter/plugin_job_template.json" />
+                                <!-- oracle -->
+                                <copy file="../../../oraclereader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/oraclereader/plugin.json" />
+                                <copy file="../../../oraclereader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/oraclereader/plugin_job_template.json" />
+                                <copy file="../../../oraclewriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/oraclewriter/plugin.json" />
+                                <copy file="../../../oraclewriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/oraclewriter/plugin_job_template.json" />
+                                <!-- postgresql -->
+                                <copy file="../../../postgresqlreader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/postgresqlreader/plugin.json" />
+                                <copy file="../../../postgresqlreader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/postgresqlreader/plugin_job_template.json" />
+                                <copy file="../../../postgresqlwriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/postgresqlwriter/plugin.json" />
+                                <copy file="../../../postgresqlwriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/postgresqlwriter/plugin_job_template.json" />
+                                <!-- rdbms -->
+                                <copy file="../../../rdbmsreader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/rdbmsreader/plugin.json" />
+                                <copy file="../../../rdbmsreader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/rdbmsreader/plugin_job_template.json" />
+                                <copy file="../../../rdbmswriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/rdbmswriter/plugin.json" />
+                                <copy file="../../../rdbmswriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/rdbmswriter/plugin_job_template.json" />
+                                <!-- sqlserver -->
+                                <copy file="../../../sqlserverreader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/sqlserverreader/plugin.json" />
+                                <copy file="../../../sqlserverreader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/sqlserverreader/plugin_job_template.json" />
+                                <copy file="../../../sqlserverwriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/sqlserverwriter/plugin.json" />
+                                <copy file="../../../sqlserverwriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/sqlserverwriter/plugin_job_template.json" />
+                                <!-- txtfile -->
+                                <copy file="../../../txtfilereader/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/reader/txtfilereader/plugin.json" />
+                                <copy file="../../../txtfilereader/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/reader/txtfilereader/plugin_job_template.json" />
+                                <copy file="../../../txtfilewriter/src/main/resources/plugin.json" tofile="${project.build.directory}/datax/plugin/writer/txtfilewriter/plugin.json" />
+                                <copy file="../../../txtfilewriter/src/main/resources/plugin_job_template.json" tofile="${project.build.directory}/datax/plugin/writer/txtfilewriter/plugin_job_template.json" />
+    
+                                <!-- 定义tar.gz文件的目标路径 -->
+                                <property name="tgz.archive" value="${project.build.directory}/${project.artifactId}.tar.gz" />
+                                <!--suppress UnresolvedMavenProperty -->
+                                <tar destfile="${tgz.archive}" compression="gzip">
+                                    <tarfileset dir="${project.build.directory}/datax"/>
+                                </tar>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
