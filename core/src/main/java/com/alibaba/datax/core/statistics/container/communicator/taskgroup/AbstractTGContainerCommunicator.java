@@ -29,7 +29,8 @@ public abstract class AbstractTGContainerCommunicator extends AbstractContainerC
 
     public AbstractTGContainerCommunicator(Configuration configuration) {
         super(configuration);
-        this.jobId = configuration.getInt(
+        // [dataX源码修改]: 此处getInt修改,因为入口类Engine此参数 DATAX_CORE_CONTAINER_JOB_ID 为 getLong
+        this.jobId = configuration.getLong(
                 CoreConstant.DATAX_CORE_CONTAINER_JOB_ID);
         super.setCollector(new ProcessInnerCollector(this.jobId));
         this.taskGroupId = configuration.getInt(

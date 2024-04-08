@@ -1,0 +1,219 @@
+{
+	"job": {
+		"content": [
+			{
+				"reader": {
+					"name": "postgresqlreader",
+					"parameter": {
+						"column": [
+							"id",
+							"name",
+							"type_id",
+							"tenant_id",
+							"project_id",
+							"create_time",
+							"create_user",
+							"update_time",
+							"update_user",
+							"model_status",
+							"device_id",
+							"type_identifier",
+							"remark",
+							"group_id",
+							"service_area",
+							"code",
+							"parent_id",
+							"virtual",
+							"loc_floor_id",
+							"loc_space_id",
+							"loc_unit_id",
+							"loc_building_id"
+						],
+						"connection": [
+							{
+								"jdbcUrl": [
+									"jdbc:postgresql://172.21.234.20:5432/app-energy?characterEncoding=UTF-8&autoReconnect=true&useSSL=false&serverTimezone=Asia/Shanghai"
+								],
+								"table": [
+									"energy"
+								]
+							}
+						],
+						"password": "postgres",
+						"username": "postgres",
+						"where": ""
+					}
+				},
+				"writer": {
+					"name": "hdfswriter",
+					"parameter": {
+						"column": [
+							{
+								"name": "id",
+								"columnSerial": 0,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "name",
+								"columnSerial": 1,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "type_id",
+								"columnSerial": 2,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "tenant_id",
+								"columnSerial": 3,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "project_id",
+								"columnSerial": 4,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "create_time",
+								"columnSerial": 5,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "create_user",
+								"columnSerial": 6,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "update_time",
+								"columnSerial": 7,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "update_user",
+								"columnSerial": 8,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "model_status",
+								"columnSerial": 9,
+								"type": "smallint",
+								"isPrimary": false
+							},
+							{
+								"name": "device_id",
+								"columnSerial": 10,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "type_identifier",
+								"columnSerial": 11,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "remark",
+								"columnSerial": 12,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "group_id",
+								"columnSerial": 13,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "service_area",
+								"columnSerial": 14,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "code",
+								"columnSerial": 15,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "parent_id",
+								"columnSerial": 16,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "virtual",
+								"columnSerial": 17,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "loc_floor_id",
+								"columnSerial": 18,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "loc_space_id",
+								"columnSerial": 19,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "loc_unit_id",
+								"columnSerial": 20,
+								"type": "string",
+								"isPrimary": false
+							},
+							{
+								"name": "loc_building_id",
+								"columnSerial": 21,
+								"type": "string",
+								"isPrimary": false
+							}
+						],
+						"compress": "NONE",
+						"defaultFS": "hdfs://nimbus-hadoop",
+						"fieldDelimiter": "\t",
+						"fileName": "ods_energy_energy",
+						"fileType": "orc",
+						"hadoopConfig": {
+							"dfs.client.failover.proxy.provider.nimbus-hadoop": "org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider",
+							"dfs.client.use.datanode.hostname": "true",
+							"dfs.ha.namenodes.nimbus-hadoop": "nn1,nn2",
+							"dfs.namenode.rpc-address.nimbus-hadoop.nn1": "bd01:8020",
+							"dfs.namenode.rpc-address.nimbus-hadoop.nn2": "bd02:8020",
+							"dfs.nameservices": "nimbus-hadoop",
+							"fs.defaultFS": "hdfs://nimbus-hadoop",
+							"fs.hdfs.impl": "org.apache.hadoop.hdfs.DistributedFileSystem",
+							"yarn.resourcemanager.address.rm1": "bd02:8032",
+							"yarn.resourcemanager.address.rm2": "bd03:8032",
+							"yarn.resourcemanager.hostname.rm1": "bd02",
+							"yarn.resourcemanager.hostname.rm2": "bd03"
+						},
+						"path": "/hive/warehouse/nimbus_bigdata.db/ods_energy_energy/",
+						"writeMode": "truncate"
+					}
+				}
+			}
+		],
+		"setting": {
+			"errorLimit": {
+				"percentage": 0.02,
+				"record": 0
+			},
+			"speed": {
+				"byte": 10485760
+			}
+		}
+	}
+}
