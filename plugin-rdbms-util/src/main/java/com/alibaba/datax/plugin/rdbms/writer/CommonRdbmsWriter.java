@@ -2,6 +2,8 @@ package com.alibaba.datax.plugin.rdbms.writer;
 
 import com.alibaba.datax.common.element.Column;
 import com.alibaba.datax.common.element.Record;
+import com.alibaba.datax.common.element.StringColumn;
+import com.alibaba.datax.common.element.UuidColumn;
 import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.common.plugin.RecordReceiver;
 import com.alibaba.datax.common.plugin.TaskPluginCollector;
@@ -540,6 +542,25 @@ public class CommonRdbmsWriter {
                         preparedStatement.setBoolean(columnIndex + 1, column.asBoolean());
                     } else {
                         preparedStatement.setString(columnIndex + 1, column.asString());
+                    }
+                    break;
+                // [dataX源码修改]:扩展 uuid|json|jsonb 类型
+                case Types.OTHER:
+                    if ("uuid".equals(typeName)) {
+                        preparedStatement.setString(columnIndex + 1, column.asString());
+                    } else if ("json".equals(typeName)) {
+                        preparedStatement.setString(columnIndex + 1, column.asString());
+                    } else if ("jsonb".equals(typeName)) {
+                        preparedStatement.setString(columnIndex + 1, column.asString());
+                    } else {
+                        throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, String.format(
+                                "您的配置文件中的列配置信息有误. 因为DataX 不支持数据库写入这种字段类型. 字段名:[%s], 字段类型:[%d], 字段Java类型:[%s]. 请修改表中该字段的类型或者不同步该字段.",
+                                this.resultSetMetaData.getLeft()
+                                        .get(columnIndex),
+                                this.resultSetMetaData.getMiddle()
+                                        .get(columnIndex),
+                                this.resultSetMetaData.getRight()
+                                        .get(columnIndex)));
                     }
                     break;
                 default:

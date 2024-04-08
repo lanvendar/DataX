@@ -324,7 +324,7 @@ public class CommonRdbmsReader {
                         }
                         record.addColumn(new StringColumn(stringData));
                         break;
-                     // [dataX源码修改]:扩展 uuid|json|jsonb 类型
+                    // [dataX源码修改]:扩展 uuid|json|jsonb 类型
                     case Types.OTHER:
                         String columnTypeName = metaData.getColumnTypeName(i);
                         if ("uuid".equals(columnTypeName)) {
