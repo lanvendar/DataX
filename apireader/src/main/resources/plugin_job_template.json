@@ -1,0 +1,75 @@
+{
+  "name": "apireader",
+  "parameter": {
+    "method": "POST",
+    "url": "http://172.21.234.21:32001/bdmm-manager/api/schemaInfo/list",
+    "header": {
+      "X-Authorization": [
+        "Bearer ${token}"
+      ]
+    },
+    "param": {},
+    "auth": {
+      "type": "NO_AUTH",
+      "param": {}
+    },
+    "body": {
+      "params": {},
+      "page": 1,
+      "limit": 200
+    },
+    "cacheParamList": [
+    ],
+    "cacheParamTimeout": 0,
+    "timeout": 0,
+    "analyzeColumnList": [
+      {
+        "index": 1,
+        "name": "schemaId",
+        "type": "String",
+        "path": "items[].schemaId"
+      },
+      {
+        "index": 2,
+        "name": "databaseType",
+        "type": "String",
+        "path": "items[].schemaName"
+      },
+      {
+        "index": 3,
+        "name": "schemaName",
+        "type": "String",
+        "path": "items[].driverClass"
+      }
+    ],
+    "preApiInfoList": [
+      {
+        "id": "",
+        "name": "",
+        "method": "POST",
+        "url": "http://172.21.234.21:32001/infra-auth/api/noauth/v2/login",
+        "header": {},
+        "param": {},
+        "auth": {
+          "type": "NO_AUTH",
+          "param": {}
+        },
+        "body": {
+          "device": "PC",
+          "username": "Q0gKfYXKUPGKOmjLjLZUFVVveY7FRZ936yftf3bYsTd10oPq78YAvS2f9dei4cQ/DqxBJtWJl3k4rvHknLFXOv/9YzB2Qmov5DJS1VRWpQInZBRSXmzV8loB29pM0Kje4Bkw3SYPKCCrPBd8YilVhRQgJeEIrNOymvWP7+U9esI=",
+          "password": "XsYYH7+rx7aAE8oXS3bJqsEZ6ilL0Cl1OXE7LSgteNT5tHqr4Z1RNnq49UWdsmyooEpG/9qXmC3Ysach6Y0NarQlLaTU4hVHFBDZTc8K2dcWP3SZGdvr9aReq1eF0lk26k8RfKNhDZt7z9NjksQUMucn/JgLDsFrqf6ag74eps4="
+        },
+        "cacheParamList": [
+          {
+            "name": "token",
+            "path": "items.token"
+          }
+        ],
+        "timeout": 0,
+        "analyzeColumnList": [
+        ],
+        "requestOrder": 0
+      }
+    ]
+  }
+}
