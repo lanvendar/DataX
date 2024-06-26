@@ -1,26 +1,24 @@
 package com.alibaba.datax.plugin.reader.apireader;
 
-import com.alibaba.datax.common.element.BoolColumn;
-import com.alibaba.datax.common.element.DateColumn;
-import com.alibaba.datax.common.element.DoubleColumn;
-import com.alibaba.datax.common.element.LongColumn;
-import com.alibaba.datax.common.element.StringColumn;
-import com.alibaba.datax.common.element.UuidColumn;
-import com.nimbus.bdmm.apihub.constant.ColumnTypeEnum;
-import com.nimbus.bdmm.apihub.dto.AnalyzeColumnDto;
-import com.nimbus.bdmm.apihub.dto.ApiInfoDto;
-import com.nimbus.bdmm.apihub.dto.RequestResultDto;
-import com.nimbus.bdmm.apihub.executor.BaseRequestExecutor;
-import com.nimbus.bdmm.apihub.executor.RequestExecutor;
-import com.nimbus.bdmm.common.exception.CustomException;
-import com.nimbus.bdmm.common.jackson.JacksonUtils;
-import org.apache.commons.collections4.CollectionUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nimbus.apihub.call.ApiRequestExecutor;
+import com.nimbus.apihub.dto.api.ApiRequestDto;
+import com.nimbus.apihub.dto.chain.CallChainDto;
+import com.nimbus.apihub.dto.parse.ChainsResultDto;
+import com.nimbus.apihub.dto.schema.AbstractSchema;
+import com.nimbus.apihub.dto.schema.ArraySchema;
+import com.nimbus.apihub.dto.schema.ObjectSchema;
+import com.nimbus.apihub.enums.DataType;
+import com.nimbus.common.data.model.api.ApiResultDto;
+import com.nimbus.common.utils.utils.JacksonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,73 +36,28 @@ public class Test {
 
 
     @org.junit.Test
-    public void test() {
-        RequestExecutor requestExecutor = new BaseRequestExecutor();
-//        String json = "{\"id\":\"\",\"name\":\"数据源查询\",\"method\":\"POST\",\"url\":\"http://172.21.234.21:32001/bdmm-manager/api/schemaInfo/list\",\"header\":{\"X-Authorization\":[\"Bearer ${token}\"]},\"param\":{},\"auth\":{\"type\":\"API_KEY\",\"param\":{\"location\":\"header\",\"key\":\"hello\",\"value\":\"world\"}},\"body\":{\"params\":{},\"page\":1,\"limit\":200},\"cacheParamList\":[],\"cacheConfig\":{\"type\":\"file\",\"param\":{\"cacheTimeout\":\"0\"}},\"timeout\":0,\"analyzeColumnList\":[{\"index\":1,\"name\":\"schemaId\",\"type\":\"STRING\",\"path\":\"items[].schemaId1\"},{\"index\":2,\"name\":\"databaseType\",\"type\":\"STRING\",\"path\":\"items[].schemaName\"},{\"index\":3,\"name\":\"schemaName\",\"type\":\"STRING\",\"path\":\"items[].driverClass\"},{\"index\":4,\"name\":\"erMessage\",\"type\":\"STRING\",\"path\":\"erMessage\"}],\"preApiInfoList\":[{\"id\":\"\",\"name\":\"\",\"method\":\"POST\",\"url\":\"http://172.16.5.235:32001/infra-auth/api/noauth/v2/login\",\"header\":{},\"param\":{},\"auth\":{\"type\":\"NO_AUTH\",\"param\":{}},\"body\":{\"device\":\"PC\",\"username\":\"Q0gKfYXKUPGKOmjLjLZUFVVveY7FRZ936yftf3bYsTd10oPq78YAvS2f9dei4cQ/DqxBJtWJl3k4rvHknLFXOv/9YzB2Qmov5DJS1VRWpQInZBRSXmzV8loB29pM0Kje4Bkw3SYPKCCrPBd8YilVhRQgJeEIrNOymvWP7+U9esI=\",\"password\":\"XsYYH7+rx7aAE8oXS3bJqsEZ6ilL0Cl1OXE7LSgteNT5tHqr4Z1RNnq49UWdsmyooEpG/9qXmC3Ysach6Y0NarQlLaTU4hVHFBDZTc8K2dcWP3SZGdvr9aReq1eF0lk26k8RfKNhDZt7z9NjksQUMucn/JgLDsFrqf6ag74eps4=\"},\"cacheParamList\":[{\"name\":\"token\",\"path\":\"items.token\"}],\"cacheConfig\":{\"type\":\"file\",\"param\":{\"cacheTimeout\":\"0\"}},\"timeout\":0,\"analyzeColumnList\":[],\"requestOrder\":0}]}";;
-        String json = "{\"id\":\"\",\"name\":\"数据源查询\",\"method\":\"POST\",\"url\":\"http://172.21.234.21:32001/bdmm-manager/api/schemaInfo/list\",\"header\":{\"X-Authorization\":[\"Bearer ${token}\"]},\"param\":{},\"auth\":{\"type\":\"API_KEY\",\"param\":{\"location\":\"header\",\"key\":\"hello\",\"value\":\"world\"}},\"body\":{\"params\":{},\"page\":1,\"limit\":20},\"cacheParamList\":[],\"cacheConfig\":{\"type\":\"file\",\"param\":{\"cacheTimeout\":\"0\"}},\"timeout\":5,\"isPreApi\":false,\"analyzeColumnList\":[{\"index\":1,\"name\":\"schemaId\",\"type\":\"UUID\",\"path\":\"items[].schemaId\"},{\"index\":2,\"name\":\"schemaName\",\"type\":\"STRING\",\"path\":\"items[].schemaName\"}],\"preApiInfoList\":[{\"id\":\"\",\"name\":\"\",\"method\":\"POST\",\"url\":\"http://172.16.5.235:32001/infra-auth/api/noauth/v2/login\",\"header\":{},\"param\":{},\"auth\":{\"type\":\"NO_AUTH\",\"param\":{}},\"body\":{\"device\":\"PC\",\"username\":\"Q0gKfYXKUPGKOmjLjLZUFVVveY7FRZ936yftf3bYsTd10oPq78YAvS2f9dei4cQ/DqxBJtWJl3k4rvHknLFXOv/9YzB2Qmov5DJS1VRWpQInZBRSXmzV8loB29pM0Kje4Bkw3SYPKCCrPBd8YilVhRQgJeEIrNOymvWP7+U9esI=\",\"password\":\"XsYYH7+rx7aAE8oXS3bJqsEZ6ilL0Cl1OXE7LSgteNT5tHqr4Z1RNnq49UWdsmyooEpG/9qXmC3Ysach6Y0NarQlLaTU4hVHFBDZTc8K2dcWP3SZGdvr9aReq1eF0lk26k8RfKNhDZt7z9NjksQUMucn/JgLDsFrqf6ag74eps4=\"},\"cacheParamList\":[{\"name\":\"token\",\"path\":\"items.token\"}],\"cacheConfig\":{\"type\":\"file\",\"param\":{\"cacheTimeout\":\"0\"}},\"timeout\":0,\"analyzeColumnList\":[],\"requestOrder\":1}]}";
-        ApiInfoDto apiInfoDto = JacksonUtils.string2bean(json, ApiInfoDto.class);
-        RequestResultDto requestResultDto = requestExecutor.sendRequest(apiInfoDto);
-        List<List<Object>> result = requestResultDto.getResult();
-        System.out.println(result);
-    }
+    public void test() throws JsonProcessingException {
+        CallChainDto callChainDto = JacksonUtils.tryStr2Bean("{\"chainName\":\"查询产品属性\",\"chainId\":\"78ccc5af-ad82-40c7-b4cd-514d205412d5\",\"chains\":[{\"index\":1,\"chainType\":\"API\",\"api\":{\"id\":\"78ccc5af-ad82-40c7-b4cd-514d205412d5\",\"name\":\"查询产品属性\",\"method\":\"GET\",\"urlTemplate\":\"http://172.21.234.21:32580/api/product/getProductAndAttr/1/57c94c57-62a3-5e80-92a4-d5160e6e0924\",\"headerTemplate\":[{\"key\":\"X-Project\",\"value\":\"b0e528ef-e2f9-36cf-8509-5514c2aa39f6\"},{\"key\":\"X-Authorization\",\"value\":\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInVzZXJJZCI6ImI3NDc3ZGE4LTI1MjMtNDhlYi1iYzdkLTRjZWIwYzM0OGIzNCIsImxvZ2luRGV2aWNlVHlwZSI6IlBDIiwiaXNQdWJsaWMiOmZhbHNlLCJsb2dpbklkIjoiNjQxNzQyNzMtMTIxZS00MTA4LWI2YzYtYjVhZTBkZDViMmU3IiwibmFtZSI6IuS8geS4mueuoeeQhuWRmCIsInBob25lIjoiMTg2MDAwMDAwMDEiLCJ0ZW5hbnRJZCI6IjRjYjJiNGM4LTJlOTEtMzcyZC04ZjExLWE5MDEzMDQzNWQzOCIsImlzcyI6InN6LW5pbWJ1cy5jb20iLCJpYXQiOjE3MTkyMTU4NDMsImV4cCI6MTcyMTgwNzg0M30.1Solws8oL5444pV67i-Frhxnsb0kIDlFPAlVY8dZksXuxaKI-gIZ_aSZcPw57N36YVHQJIl6svsv1PrYyDdyAQ\"}],\"authTemplate\":{},\"cookieTemplate\":[],\"paramsTemplate\":[],\"timeout\":5,\"resultPredicate\":{\"httpStatusCode\":200},\"schema\":{\"dataType\":\"ARRAY\",\"items\":{\"dataType\":\"OBJECT\",\"properties\":[{\"key\":\"productIdentifier\",\"description\":\"productIdentifier\",\"dataType\":\"STRING\",\"refer\":\"items[].productIdentifier\"},{\"key\":\"productName\",\"description\":\"productName\",\"dataType\":\"STRING\",\"refer\":\"items[].productName\"},{\"key\":\"attrKey\",\"description\":\"attrKey\",\"dataType\":\"STRING\",\"refer\":\"items[].attrKey\"},{\"key\":\"attrName\",\"description\":\"attrName\",\"dataType\":\"STRING\",\"refer\":\"items[].attrName\"}]}}}},{\"index\":2,\"chainType\":\"RESULT_DEFINITION\",\"schema\":{\"dataType\":\"ARRAY\",\"items\":{\"dataType\":\"OBJECT\",\"properties\":[{\"key\":\"productIdentifier\",\"description\":\"productIdentifier\",\"dataType\":\"STRING\",\"refer\":\"{{1.[].productIdentifier}}\"},{\"key\":\"productName\",\"description\":\"productName\",\"dataType\":\"STRING\",\"refer\":\"{{1.[].productName}}\"},{\"key\":\"attrKey\",\"description\":\"attrKey\",\"dataType\":\"STRING\",\"refer\":\"{{1.[].attrKey}}\"},{\"key\":\"attrName\",\"description\":\"attrName\",\"dataType\":\"STRING\",\"refer\":\"{{1.[].attrName}}\"}]}}}],\"label\":\"查询产品属性\",\"params\":[],\"value\":\"78ccc5af-ad82-40c7-b4cd-514d205412d5\",\"chainIdentifier\":\"78ccc5af-ad82-40c7-b4cd-514d205412d5\"}", CallChainDto.class);
+        ApiRequestDto apiRequestDto = new ApiRequestDto();
+        apiRequestDto.setId(callChainDto.getChainId());
+        ApiResultDto<ChainsResultDto> result = ApiRequestExecutor.invoke(apiRequestDto, callChainDto);
+        AbstractSchema abstractSchema = result.getItems().getSchema();
 
+        List<AbstractSchema> schemaList = ((ObjectSchema) ((ArraySchema) abstractSchema).getItems()).getProperties();
 
-    @org.junit.Test
-    public void test2() throws ParseException {
-        String json = "{\"id\":\"aadaef1b-0a78-491c-a18a-5e6b5d9b79c3\",\"name\":\"获取数据源信息\",\"method\":\"POST\",\"url\":\"http://172.21.234.21:32001/bdmm-manager/api/schemaInfo/list\",\"header\":{\"X-Authorization\":[\"Bearer ${token}\"]},\"body\":{\"params\":{},\"page\":1,\"limit\":20},\"param\":{},\"auth\":{\"type\":\"API_KEY\",\"param\":{\"location\":\"header\",\"value\":\"world\",\"key\":\"hello\"}},\"cacheParamList\":[],\"cacheConfig\":{\"type\":\"file\",\"param\":{\"cacheTimeout\":\"0\"}},\"timeout\":5,\"analyzeColumnList\":[{\"index\":1,\"name\":\"schemaId\",\"type\":\"UUID\",\"path\":\"items[].schemaId\"},{\"index\":2,\"name\":\"schemaName\",\"type\":\"STRING\",\"path\":\"items[].schemaName\"},{\"index\":3,\"name\":\"tableCount\",\"type\":\"STRING\",\"path\":\"items[].tableCount\"},{\"index\":4,\"name\":\"createTime\",\"type\":\"DATE\",\"path\":\"items[].createTime\"}],\"isPreApi\":false,\"preApiInfoList\":[{\"id\":\"\",\"name\":\"\",\"method\":\"POST\",\"url\":\"http://172.16.5.235:32001/infra-auth/api/noauth/v2/login\",\"header\":{},\"param\":{},\"auth\":{\"type\":\"NO_AUTH\",\"param\":{}},\"body\":{\"device\":\"PC\",\"username\":\"Q0gKfYXKUPGKOmjLjLZUFVVveY7FRZ936yftf3bYsTd10oPq78YAvS2f9dei4cQ/DqxBJtWJl3k4rvHknLFXOv/9YzB2Qmov5DJS1VRWpQInZBRSXmzV8loB29pM0Kje4Bkw3SYPKCCrPBd8YilVhRQgJeEIrNOymvWP7+U9esI=\",\"password\":\"XsYYH7+rx7aAE8oXS3bJqsEZ6ilL0Cl1OXE7LSgteNT5tHqr4Z1RNnq49UWdsmyooEpG/9qXmC3Ysach6Y0NarQlLaTU4hVHFBDZTc8K2dcWP3SZGdvr9aReq1eF0lk26k8RfKNhDZt7z9NjksQUMucn/JgLDsFrqf6ag74eps4=\"},\"cacheParamList\":[{\"name\":\"token\",\"path\":\"items.token\"}],\"cacheConfig\":{\"type\":\"file\",\"param\":{\"cacheTimeout\":\"0\"}},\"timeout\":0,\"analyzeColumnList\":[],\"requestOrder\":1}]}";
-        ApiInfoDto apiInfoDto = JacksonUtils.string2bean(json, ApiInfoDto.class);
-        List<AnalyzeColumnDto> analyzeColumnList = apiInfoDto.getAnalyzeColumnList();
-        if (CollectionUtils.isEmpty(analyzeColumnList)) {
-            throw new CustomException("字段解析列表为空");
-        }
-        RequestExecutor requestExecutor = new BaseRequestExecutor();
-        RequestResultDto requestResult = requestExecutor.sendRequest(apiInfoDto);
-        List<List<Object>> result = requestResult.getResult();
-        for (List<Object> row : result) {
-            for (int i = 0; i < row.size(); i++) {
-                AnalyzeColumnDto analyzeColumnDto = analyzeColumnList.get(i);
-                ColumnTypeEnum columnType = analyzeColumnDto.getType();
-                String value = String.valueOf(row.get(i));
-                Object rowValue = row.get(i);
-                switch (columnType) {
-                    case INT:
-                    case LONG:
-                        new LongColumn(Long.valueOf(value));
-                        break;
-                    case DOUBLE:
-                        new DoubleColumn(Double.valueOf(value));
-                        break;
-                    case BOOLEAN:
-                        new BoolColumn(Boolean.valueOf(value));
-                        break;
-                    case STRING:
-                        new StringColumn(value);
-                        break;
-                    case DATE:
-                        if (null == value || "null".equals(value)) {
-                            Date date = null;
-                            new DateColumn(date);
-                        } else if (isValidDateString(value)) {
-                            log.info("date>>");
-                            new DateColumn(sdf.parse(value));
-                        } else if (isValidLong(value)) {
-                            log.info("long>>");
-                            new DateColumn(Long.valueOf(value));
-                        } else {
-                            throw new CustomException("不支持该日期类型：" + value);
-                        }
-                        break;
-                    case UUID:
-                        new UuidColumn(value);
-                        break;
-                    default:
-                        log.warn("字段类型为其他，默认为String");
-                        new StringColumn(value);
-                        break;
-                }
+        ArrayNode resultArrayNode = JacksonUtils.tryObj2ArrayNode(result.getItems().getParserResult());
+
+        for (JsonNode jsonNode : resultArrayNode) {
+            ObjectNode objNode =  JacksonUtils.obj2ObjectNode(jsonNode);
+            for (AbstractSchema schema : schemaList) {
+                String key = schema.getKey();
+                DataType dataType = schema.getDataType();
+                System.out.print(objNode.get(key).asText());
             }
+            System.out.println("=======");
         }
     }
+
 
     /**
      * 判断字符串是否为日期格式

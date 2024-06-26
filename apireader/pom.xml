@@ -15,7 +15,6 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <apihub.version>3.5.0-alpha.0</apihub.version>
     </properties>
 
     <dependencies>
@@ -39,11 +38,10 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
 
-        <!--　　apihub sdk-->
+        <!--apihub 接口调用包-->
         <dependency>
             <groupId>com.nimbus</groupId>
-            <artifactId>bdmm-apihub</artifactId>
-            <version>${apihub.version}</version>
+            <artifactId>infra-apihub-call</artifactId>
         </dependency>
 
         <!-- for test -->

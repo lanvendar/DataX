@@ -39,6 +39,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <mysql.driver.version>5.1.47</mysql.driver.version>
+        <apihub.version>3.6.0-SNAPSHOT</apihub.version>
+
     </properties>
 
     <modules>
@@ -223,7 +225,16 @@
                 <artifactId>log4j-core</artifactId>
                 <version>2.17.1</version>
             </dependency>
+
+            <!--apihub 接口调用包-->
+            <dependency>
+                <groupId>com.nimbus</groupId>
+                <artifactId>infra-apihub-call</artifactId>
+                <version>${apihub.version}</version>
+            </dependency>
         </dependencies>
+
+
     </dependencyManagement>
 
     <repositories>

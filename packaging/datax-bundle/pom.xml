@@ -23,7 +23,6 @@
         <parquet.version>1.12.0</parquet.version>
         <slf4j.version>1.7.10</slf4j.version>
         <logback.version>1.0.13</logback.version>
-        <apihub.version>3.5.0-alpha.0</apihub.version>
 
     </properties>
     <profiles>
@@ -223,11 +222,10 @@
             <artifactId>kingbase8</artifactId>
             <version>8.6.0</version>
         </dependency>
-        <!--　　apihub sdk-->
+        <!--apihub 接口调用包-->
         <dependency>
             <groupId>com.nimbus</groupId>
-            <artifactId>bdmm-apihub</artifactId>
-            <version>${apihub.version}</version>
+            <artifactId>infra-apihub-call</artifactId>
         </dependency>
         <!--
         &lt;!&ndash; dm7 dm8 driver &ndash;&gt;
@@ -571,7 +569,7 @@
                                     <include>com.alibaba:jconsole</include>
                                     <include>com.alibaba:tools</include>
                                     <include>org.hamcrest:hamcrest-core</include>
-                                    <include>com.nimbus:bdmm-apihub</include>
+                                    <include>com.nimbus:infra-apihub-call</include>
                                 </includes>
                                 <excludes>
                                     <exclude>org.eclipse.jdt.core.compiler:ecj</exclude>

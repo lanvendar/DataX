@@ -6,19 +6,23 @@ import com.alibaba.datax.common.element.DoubleColumn;
 import com.alibaba.datax.common.element.LongColumn;
 import com.alibaba.datax.common.element.Record;
 import com.alibaba.datax.common.element.StringColumn;
-import com.alibaba.datax.common.element.UuidColumn;
 import com.alibaba.datax.common.plugin.RecordSender;
 import com.alibaba.datax.common.spi.Reader;
 import com.alibaba.datax.common.util.Configuration;
-import com.nimbus.bdmm.apihub.constant.ColumnTypeEnum;
-import com.nimbus.bdmm.apihub.dto.AnalyzeColumnDto;
-import com.nimbus.bdmm.apihub.dto.ApiInfoDto;
-import com.nimbus.bdmm.apihub.dto.RequestResultDto;
-import com.nimbus.bdmm.apihub.executor.BaseRequestExecutor;
-import com.nimbus.bdmm.apihub.executor.RequestExecutor;
-import com.nimbus.bdmm.common.exception.CustomException;
-import com.nimbus.bdmm.common.jackson.JacksonUtils;
-import org.apache.commons.collections4.CollectionUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nimbus.apihub.call.ApiRequestExecutor;
+import com.nimbus.apihub.dto.api.ApiRequestDto;
+import com.nimbus.apihub.dto.chain.CallChainDto;
+import com.nimbus.apihub.dto.parse.ChainsResultDto;
+import com.nimbus.apihub.dto.schema.AbstractSchema;
+import com.nimbus.apihub.dto.schema.ArraySchema;
+import com.nimbus.apihub.dto.schema.ObjectSchema;
+import com.nimbus.apihub.enums.DataType;
+import com.nimbus.common.data.model.api.ApiResultDto;
+import com.nimbus.common.utils.utils.JacksonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,55 +88,65 @@ public class ApiReader extends Reader {
 
         @Override
         public void startRead(RecordSender recordSender) throws ParseException {
-            ApiInfoDto apiInfoDto = JacksonUtils.string2bean(taskConfig.get("").toString(), ApiInfoDto.class);
-            List<AnalyzeColumnDto> analyzeColumnList = apiInfoDto.getAnalyzeColumnList();
-            if (CollectionUtils.isEmpty(analyzeColumnList)) {
-                throw new CustomException("字段解析列表为空");
+            String apiInfo = taskConfig.get("").toString();
+            log.info("apiInfo>>>{}", apiInfo);
+            CallChainDto callChainDto = JacksonUtils.tryStr2Bean(apiInfo, CallChainDto.class);
+            ApiRequestDto apiRequestDto = new ApiRequestDto();
+            apiRequestDto.setId(callChainDto.getChainId());
+            ApiResultDto<ChainsResultDto> result = ApiRequestExecutor.invoke(apiRequestDto, callChainDto);
+            AbstractSchema abstractSchema = result.getItems().getSchema();
+            List<AbstractSchema> schemaList;
+            try {
+                schemaList = ((ObjectSchema) ((ArraySchema) abstractSchema).getItems()).getProperties();
+            } catch (Exception e) {
+                log.error("获取schema失败", e);
+                throw new RuntimeException("获取schema失败");
             }
-            RequestExecutor requestExecutor = new BaseRequestExecutor();
-            RequestResultDto requestResult = requestExecutor.sendRequest(apiInfoDto);
-            List<List<Object>> result = requestResult.getResult();
-            for (List<Object> row : result) {
+            ArrayNode resultArrayNode = JacksonUtils.tryObj2ArrayNode(result.getItems().getParserResult());
+            for (JsonNode jsonNode : resultArrayNode) {
+                ObjectNode objNode = null;
                 Record record = recordSender.createRecord();
-                for (int i = 0; i < row.size(); i++) {
-                    AnalyzeColumnDto analyzeColumnDto = analyzeColumnList.get(i);
-                    ColumnTypeEnum columnType = analyzeColumnDto.getType();
-                    String value = String.valueOf(row.get(i));
-                    switch (columnType) {
-                        case INT:
-                        case LONG:
-                            record.addColumn(new LongColumn(Long.valueOf(value)));
-                            break;
-                        case DOUBLE:
-                            record.addColumn(new DoubleColumn(Double.valueOf(value)));
-                            break;
-                        case BOOLEAN:
-                            record.addColumn(new BoolColumn(Boolean.valueOf(value)));
+                try {
+                    objNode = JacksonUtils.obj2ObjectNode(jsonNode);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                for (AbstractSchema schema : schemaList) {
+                    String key = schema.getKey();
+                    DataType dataType = schema.getDataType();
+                    JsonNode value = objNode.get(key);
+                    switch (dataType) {
+                        case INTEGER:
+                            record.addColumn(new LongColumn(value.asLong()));
                             break;
                         case STRING:
-                            record.addColumn(new StringColumn(value));
+                            record.addColumn(new StringColumn(value.asText()));
+                            break;
+                        case NUMBER:
+                            record.addColumn(new DoubleColumn(value.asDouble()));
+                            break;
+                        case BOOLEAN:
+                            record.addColumn(new BoolColumn(value.asBoolean()));
                             break;
                         case DATE:
-                            if (null == value || "null".equals(value)) {
+                            String valueStr = value.asText();
+                            if (null == valueStr || "null".equals(valueStr)) {
                                 Date date = null;
                                 record.addColumn(new DateColumn(date));
-                            } else if (isValidTimestampString(value)) {
-                                OffsetDateTime offsetDateTime = OffsetDateTime.parse(value, formatter);
+                            } else if (isValidTimestampString(valueStr)) {
+                                OffsetDateTime offsetDateTime = OffsetDateTime.parse(valueStr, formatter);
                                 record.addColumn(new DateColumn(Date.from(offsetDateTime.toInstant())));
-                            } else if (isValidDateString(value)) {
-                                record.addColumn(new DateColumn(sdf.parse(value)));
-                            } else if (isValidLong(value)) {
-                                record.addColumn(new DateColumn(Long.valueOf(value)));
+                            } else if (isValidDateString(valueStr)) {
+                                record.addColumn(new DateColumn(sdf.parse(valueStr)));
+                            } else if (isValidLong(valueStr)) {
+                                record.addColumn(new DateColumn(Long.valueOf(valueStr)));
                             } else {
-                                throw new CustomException("不支持该日期类型：" + value);
+                                throw new RuntimeException("不支持该日期类型：" + value);
                             }
-                            break;
-                        case UUID:
-                            record.addColumn(new UuidColumn(value));
                             break;
                         default:
                             log.warn("字段类型为其他，默认为String");
-                            record.addColumn(new StringColumn(value));
+                            record.addColumn(new StringColumn(value.asText()));
                             break;
                     }
                 }
@@ -157,7 +171,6 @@ public class ApiReader extends Reader {
             }
         }
 
-
         /**
          * 判断字符串是否为timestamp格式
          *
@@ -174,7 +187,6 @@ public class ApiReader extends Reader {
             }
 
         }
-
 
         /**
          * 判断字符串是否为long型
