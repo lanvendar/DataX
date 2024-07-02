@@ -12,6 +12,7 @@ import com.alibaba.datax.common.util.Configuration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbus.apihub.call.ApiRequestExecutor;
 import com.nimbus.apihub.dto.api.ApiRequestDto;
@@ -104,7 +105,7 @@ public class ApiReader extends Reader {
             }
             ArrayNode resultArrayNode = JacksonUtils.tryObj2ArrayNode(result.getItems().getParserResult());
             for (JsonNode jsonNode : resultArrayNode) {
-                ObjectNode objNode = null;
+                ObjectNode objNode;
                 Record record = recordSender.createRecord();
                 try {
                     objNode = JacksonUtils.obj2ObjectNode(jsonNode);
@@ -115,22 +116,23 @@ public class ApiReader extends Reader {
                     String key = schema.getKey();
                     DataType dataType = schema.getDataType();
                     JsonNode value = objNode.get(key);
+                    boolean isNullNode = value instanceof NullNode;
                     switch (dataType) {
                         case INTEGER:
-                            record.addColumn(new LongColumn(value.asLong()));
+                            record.addColumn(new LongColumn(isNullNode ? null : value.asLong()));
                             break;
                         case STRING:
-                            record.addColumn(new StringColumn(value.asText()));
+                            record.addColumn(new StringColumn(isNullNode ? null : value.asText()));
                             break;
                         case NUMBER:
-                            record.addColumn(new DoubleColumn(value.asDouble()));
+                            record.addColumn(new DoubleColumn(isNullNode ? null : value.asDouble()));
                             break;
                         case BOOLEAN:
-                            record.addColumn(new BoolColumn(value.asBoolean()));
+                            record.addColumn(new BoolColumn(isNullNode ? null : value.asBoolean()));
                             break;
                         case DATE:
                             String valueStr = value.asText();
-                            if (null == valueStr || "null".equals(valueStr)) {
+                            if (isNullNode) {
                                 Date date = null;
                                 record.addColumn(new DateColumn(date));
                             } else if (isValidTimestampString(valueStr)) {
@@ -146,7 +148,7 @@ public class ApiReader extends Reader {
                             break;
                         default:
                             log.warn("字段类型为其他，默认为String");
-                            record.addColumn(new StringColumn(value.asText()));
+                            record.addColumn(new StringColumn(isNullNode ? null : value.asText()));
                             break;
                     }
                 }
