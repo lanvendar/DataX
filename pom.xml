@@ -84,6 +84,7 @@
         <module>loghubreader</module>
         <module>datahubreader</module>
         <module>starrocksreader</module>
+        <module>sybasereader</module>
         <module>dorisreader</module>-->
         <!-- writer -->
         <module>mysqlwriter</module>
@@ -128,6 +129,7 @@
         <module>doriswriter</module>
         <module>selectdbwriter</module>
         <module>adbmysqlwriter</module>
+        <module>sybasewriter</module>
         <module>neo4jwriter</module>-->
 
         <!-- common support module -->
@@ -138,6 +140,7 @@
         <module>datax-example</module>-->
         <!-- [dataX源码修改] 增加自定义集合打包模块 -->
         <module>packaging/datax-bundle</module>
+        <module>paimonwriter</module>
 
     </modules>
 
