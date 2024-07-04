@@ -22,13 +22,15 @@ import com.alibaba.datax.common.spi.Writer;
 import com.alibaba.datax.common.util.Configuration;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.paimon.data.BinaryRow;
+import org.apache.paimon.data.BinaryString;
+import org.apache.paimon.data.Decimal;
 import org.apache.paimon.data.GenericRow;
+import org.apache.paimon.data.Timestamp;
 import org.apache.paimon.table.Table;
 import org.apache.paimon.table.sink.BatchTableCommit;
 import org.apache.paimon.table.sink.BatchTableWrite;
 import org.apache.paimon.table.sink.BatchWriteBuilder;
 import org.apache.paimon.table.sink.CommitMessage;
-import org.apache.paimon.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +63,7 @@ public class PaimonWriter extends Writer {
         
         @Override
         public void init() {
+            System.setProperty("HADOOP_USER_NAME", "root");
             originalConfig = getPluginJobConf();
         }
         
@@ -80,133 +83,140 @@ public class PaimonWriter extends Writer {
             super.post();
         }
         
+    }
         
-        public static class Task extends Writer.Task {
-            
-            private Configuration taskConfig;
-            
-            private Table table;
-            
-            private List<Pair<String, String>> columns;
-            
-            private List<String> columnTypes;
-            
-            @Override
-            public void startWrite(RecordReceiver lineReceiver) {
-                try {
-                    int columnSize = columns.size();
-                    BatchWriteBuilder writeBuilder = table.newBatchWriteBuilder().withOverwrite();
-                    BatchTableWrite write = writeBuilder.newWrite();
-                    Record record;
-                    while ((record = lineReceiver.getFromReader()) != null) {
-                        if (record.getColumnNumber() != columnSize) {
-                            // 源头读取字段列数与目的表字段写入列数不相等，直接报错
-                            throw DataXException
-                                    .asDataXException(
-                                        String.format(
-                                            "列配置信息有错误. 因为您配置的任务中，源头读取字段数:%s 与 目的表要写入的字段数:%s 不相等. 请检查您的配置并作出修改.",
-                                            record.getColumnNumber(),
-                                            columnSize));
-                        }
-                        GenericRow writeRecord = new GenericRow(columnSize);
-                        
-                        for (int i = 0; i < columnSize; i++) {
-                            Column col = record.getColumn(i);
-                            writeRecord.setField(i, parseValue(col, columnTypes.get(i)));
-                        }
-                        
-                        write.write(writeRecord);
+    public static class Task extends Writer.Task {
+        
+        private Configuration taskConfig;
+        
+        private Table table;
+        
+        private List<Pair<String, String>> columns;
+        
+        private List<String> columnTypes;
+        
+        @Override
+        public void startWrite(RecordReceiver lineReceiver) {
+            try {
+                int columnSize = columns.size();
+                BatchWriteBuilder writeBuilder = table.newBatchWriteBuilder().withOverwrite();
+                BatchTableWrite write = writeBuilder.newWrite();
+                Record record;
+                while ((record = lineReceiver.getFromReader()) != null) {
+                    if (record.getColumnNumber() != columnSize) {
+                        // 源头读取字段列数与目的表字段写入列数不相等，直接报错
+                        throw DataXException
+                                .asDataXException(
+                                    String.format(
+                                        "列配置信息有错误. 因为您配置的任务中，源头读取字段数:%s 与 目的表要写入的字段数:%s 不相等. 请检查您的配置并作出修改.",
+                                        record.getColumnNumber(),
+                                        columnSize));
+                    }
+                    GenericRow writeRecord = new GenericRow(columnSize);
+                    
+                    for (int i = 0; i < columnSize; i++) {
+                        Column col = record.getColumn(i);
+                        writeRecord.setField(i, parseValue(col, columnTypes.get(i)));
                     }
                     
-                    try {
-                        write.compact(BinaryRow.EMPTY_ROW, 0, true);
-                    } catch (Exception e) {
-                        LOG.error("compaction error", e);
-                        throw e;
-                    }
-                    
-                    List<CommitMessage> messages = null;
-                    BatchTableCommit commit = null;
-                    try {
-                        messages = write.prepareCommit();
-                        // 3. Collect all CommitMessages to a global node and commit
-                        commit = writeBuilder.newCommit();
-                        commit.commit(messages);
-                        
-                    } catch (Exception e) {
-                        LOG.error("commit paimon表失败", e);
-                        if (commit != null) {
-                            commit.abort(messages);
-                        }
-                        throw e;
-                    } finally {
-                        if (commit != null) {
-                            commit.close();
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.error("写入Paimon表失败", e);
-                    throw DataXException.asDataXException(e.getMessage());
+                    write.write(writeRecord);
                 }
-            }
-            
-            private static Object parseValue(Column col, String type) {
-                switch (type) {
-                    case "BOOLEAN":
-                        return col.asBoolean();
-                    case "BYTEA":
-                        return col.asBytes();
-                    case "SMALLINT":
-                        return col.asLong();
-                    case "INT":
-                        return col.asLong();
-                    case "BIGINT":
-                        return col.asLong();
-                    case "FLOAT":
-                        return col.asBigDecimal().doubleValue();
-                    case "DOUBLE":
-                        return col.asBigDecimal().doubleValue();
-                    case "DECIMAL":
-                        return col.asBigDecimal().doubleValue();
-                    case "TIMESTAMP":
-                        return col.asDate();
-                    case "DATE":
-                        return col.asDate();
-                    default:
-                        return DataTypes.STRING();
-                }
-            }
-            
-            @Override
-            public void init() {
-                List<Configuration> columnConfigs = taskConfig.getListConfiguration(Key.COLUMN);
-                columns = new ArrayList<>();
-                columnTypes = new ArrayList<>();
-                columnConfigs.forEach(column -> {
-                    String name = column.getString("name");
-                    String type = column.getString("type");
-                    
-                    columns.add(Pair.of(name, type));
-                    columnTypes.add(type);
-                });
-            }
-            
-            @Override
-            public void post() {
-                super.post();
-            }
-            
-            @Override
-            public void prepare() {
-                super.prepare();
-                table = PaimonHelper.getPaimonTable(taskConfig);
                 
+                try {
+                    write.compact(BinaryRow.EMPTY_ROW, 0, true);
+                } catch (Exception e) {
+                    LOG.error("compaction error", e);
+                    throw e;
+                }
+                
+                List<CommitMessage> messages = null;
+                BatchTableCommit commit = null;
+                try {
+                    messages = write.prepareCommit();
+                    // 3. Collect all CommitMessages to a global node and commit
+                    commit = writeBuilder.newCommit();
+                    commit.commit(messages);
+                    
+                } catch (Exception e) {
+                    LOG.error("commit paimon表失败", e);
+                    if (commit != null) {
+                        commit.abort(messages);
+                    }
+                    throw e;
+                } finally {
+                    if (commit != null) {
+                        commit.close();
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error("写入Paimon表失败", e);
+                throw DataXException.asDataXException(e.getMessage());
+            }
+        }
+        
+        private static Object parseValue(Column col, String type) {
+            switch (type.toUpperCase()) {
+                case "BOOLEAN":
+                    return col.asBoolean();
+                case "BYTEA":
+                    return col.asBytes();
+                case "SMALLINT":
+                    return col.asLong();
+                case "INT":
+                    return col.asBigInteger().intValue();
+                case "BIGINT":
+                    return col.asLong();
+                case "FLOAT":
+                    return col.asBigDecimal().doubleValue();
+                case "DOUBLE":
+                    return col.asBigDecimal().doubleValue();
+                case "DECIMAL":
+                    return Decimal.fromBigDecimal(col.asBigDecimal(), 18, 6);
+                case "TIMESTAMP":
+                    return Timestamp.fromEpochMillis(col.asDate().getTime());
+                case "DATE":
+                    return Timestamp.fromEpochMillis(col.asDate().getTime());
+                default:
+                    return BinaryString.fromString(col.asString());
+            }
+        }
+        
+        @Override
+        public void init() {
+            System.setProperty("HADOOP_USER_NAME", "root");
+            this.taskConfig = super.getPluginJobConf();
+            List<Configuration> columnConfigs = taskConfig.getListConfiguration(Key.COLUMN);
+            columns = new ArrayList<>();
+            columnTypes = new ArrayList<>();
+            columnConfigs.forEach(column -> {
+                String name = column.getString("name");
+                String type = column.getString("type");
+                
+                columns.add(Pair.of(name, type));
+                columnTypes.add(type);
+            });
+        }
+        
+        @Override
+        public void post() {
+            super.post();
+        }
+        
+        @Override
+        public void prepare() {
+            super.prepare();
+            try {
+                table = PaimonHelper.getPaimonTable(taskConfig);
+            } catch (Exception e) {
+                LOG.error("获取Paimon表失败", e);
+                throw e;
             }
             
-            @Override
-            public void destroy() {
-            
-            }
+        }
+        
+        @Override
+        public void destroy() {
+        
         }
     }
 }

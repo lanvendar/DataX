@@ -1,0 +1,27 @@
+{
+  "warehouse": "hdfs:///paimon/test-data",
+  "metastore": "hive",
+  "uri": "thrift://bd02:9083",
+  "tableType": "external",
+  "hiveConfDir": null,
+  "hadoopConfDir": null,
+  "database": "nimbus_bigdata_lzk_2",
+  "table": "people2",
+  "primaryKey": "name",
+  "partitionKey": null,
+  "column": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "age",
+      "type": "int"
+    }
+  ],
+  "paimonConf": {
+    "full-compaction.delta-commits": "1",
+    "file.format": "parquet",
+    "bucket": "1"
+  }
+}
