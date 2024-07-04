@@ -1,0 +1,25 @@
+{
+    "name": "paimonwriter",
+    "parameter": {
+        "warehouse": "",
+        "metastore": "",
+        "uri": "",
+        "tableType": "",
+        "hiveConfDir": "",
+        "hadoopConfDir": "",
+        "database": "",
+        "table": "",
+        "primaryKey": "",
+        "partitionKey": "",
+        "PRIMARY_KEY": "",
+        "column": [
+            {
+                "name": "",
+                "type": ""
+            }
+        ],
+        "paimonConf": {
+        
+        }
+    }
+}
