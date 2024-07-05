@@ -127,6 +127,11 @@
         </dependency>
         <dependency>
             <groupId>com.alibaba.datax</groupId>
+            <artifactId>paimonwriter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.datax</groupId>
             <artifactId>postgresqlreader</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -291,6 +296,7 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.alibaba.datax.core.Engine</mainClass>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <!-- 添加资源文件至jar包 -->
                                 <!--<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                     <resource>conf/core.json</resource>
@@ -337,6 +343,7 @@
                                     <include>com.alibaba.datax:txtfilereader</include>
                                     <include>com.alibaba.datax:txtfilewriter</include>
                                     <include>com.alibaba.datax:apireader</include>
+                                    <include>com.alibaba.datax:paimonwriter</include>
 
 
                                     <!-- 依赖导入 -->
@@ -570,6 +577,7 @@
                                     <include>com.alibaba:tools</include>
                                     <include>org.hamcrest:hamcrest-core</include>
                                     <include>com.nimbus:infra-apihub-call</include>
+                                    <include>org.apache.paimon:paimon-bundle</include>
                                 </includes>
                                 <excludes>
                                     <exclude>org.eclipse.jdt.core.compiler:ecj</exclude>
@@ -709,6 +717,12 @@
                                       tofile="${project.build.directory}/datax/plugin/reader/apireader/plugin.json"/>
                                 <copy file="../../../apireader/src/main/resources/plugin_job_template.json"
                                       tofile="${project.build.directory}/datax/plugin/reader/apireader/plugin_job_template.json"/>
+                                
+                                <!-- paimonwriter -->
+                                <copy file="../../../paimonwriter/src/main/resources/plugin.json"
+                                    tofile="${project.build.directory}/datax/plugin/writer/paimonwriter/plugin.json"/>
+                                <copy file="../../../paimonwriter/src/main/resources/plugin_job_template.json"
+                                    tofile="${project.build.directory}/datax/plugin/writer/paimonwriter/plugin_job_template.json"/>
 
                                 <!-- 定义tar.gz文件的目标路径 -->
                                 <property name="tgz.archive"

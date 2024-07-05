@@ -139,12 +139,15 @@
 
     <root level="${loglevel:-INFO}">
         <appender-ref ref="STDOUT" />
-        <appender-ref ref="FILE" />
         <!--
+        <appender-ref ref="FILE" />
         <appender-ref ref="USER_FILE" />
         <appender-ref ref="BAD_RECORD_FILE" />
         <appender-ref ref="DEV_FILE" />
         <appender-ref ref="DEBUG_FILE" />
         -->
     </root>
+    
+    <logger name="org.apache.hadoop.hdfs.protocol.datatransfer.sasl" level="OFF" />
+
 </configuration>
