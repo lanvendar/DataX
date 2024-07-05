@@ -51,12 +51,12 @@ public class TestPaimonWriter {
         LinkedList<Record> list = new LinkedList<>();
         
         DefaultRecord record1 = new DefaultRecord();
-        record1.setColumn(0, new StringColumn("张三"));
-        record1.setColumn(1, new LongColumn(21));
+        record1.setColumn(0, new StringColumn("张三a"));
+        record1.setColumn(1, new LongColumn(39));
         
         DefaultRecord record2 = new DefaultRecord();
-        record2.setColumn(0, new StringColumn("李四"));
-        record2.setColumn(1, new LongColumn(32));
+        record2.setColumn(0, new StringColumn("王五a"));
+        record2.setColumn(1, new LongColumn(49));
         
         list.add(record1);
         list.add(record2);

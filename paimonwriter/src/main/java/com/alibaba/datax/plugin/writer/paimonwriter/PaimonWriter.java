@@ -118,7 +118,6 @@ public class PaimonWriter extends Writer {
                         Column col = record.getColumn(i);
                         writeRecord.setField(i, parseValue(col, columnTypes.get(i)));
                     }
-                    
                     write.write(writeRecord);
                 }
                 
@@ -133,6 +132,7 @@ public class PaimonWriter extends Writer {
                 BatchTableCommit commit = null;
                 try {
                     messages = write.prepareCommit();
+                    
                     // 3. Collect all CommitMessages to a global node and commit
                     commit = writeBuilder.newCommit();
                     commit.commit(messages);
@@ -161,19 +161,17 @@ public class PaimonWriter extends Writer {
                 case "BYTEA":
                     return col.asBytes();
                 case "SMALLINT":
-                    return col.asLong();
+                    return col.asLong().shortValue();
                 case "INT":
                     return col.asBigInteger().intValue();
                 case "BIGINT":
                     return col.asLong();
                 case "FLOAT":
-                    return col.asBigDecimal().doubleValue();
                 case "DOUBLE":
                     return col.asBigDecimal().doubleValue();
                 case "DECIMAL":
                     return Decimal.fromBigDecimal(col.asBigDecimal(), 18, 6);
                 case "TIMESTAMP":
-                    return Timestamp.fromEpochMillis(col.asDate().getTime());
                 case "DATE":
                     return Timestamp.fromEpochMillis(col.asDate().getTime());
                 default:

@@ -11,6 +11,7 @@
         "table": "",
         "primaryKey": "",
         "partitionKey": "",
+        "mode":"",
         "column": [
             {
                 "name": "",

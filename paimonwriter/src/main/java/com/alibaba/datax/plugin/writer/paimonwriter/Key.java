@@ -28,4 +28,6 @@ public class Key {
     public static final String PARTITION_KEY = "partitionKey";
     
     public static final String COLUMN = "column";
+    
+    public static final String MODE = "mode";
 }

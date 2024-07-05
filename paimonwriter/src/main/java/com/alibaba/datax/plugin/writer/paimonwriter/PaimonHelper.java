@@ -27,6 +27,7 @@ import org.apache.paimon.options.CatalogOptions;
 import org.apache.paimon.options.Options;
 import org.apache.paimon.schema.Schema;
 import org.apache.paimon.table.Table;
+import org.apache.paimon.table.sink.BatchTableCommit;
 import org.apache.paimon.types.DataType;
 import org.apache.paimon.types.DataTypes;
 import org.slf4j.Logger;
@@ -95,11 +96,24 @@ public class PaimonHelper {
         Catalog paimonCatalog = createPaimonCatalog(originalConfig);
         String databaseName = originalConfig.getString(Key.DATABASE);
         String tableName = originalConfig.getString(Key.TABLE);
+        
         Identifier identifier = Identifier.create(databaseName, tableName);
         Table table = null;
         try {
+            //if ("truncate".equalsIgnoreCase(originalConfig.getString(Key.MODE))) {
+            //    paimonCatalog.dropTable(identifier, true);
+            //}
             if (!paimonCatalog.tableExists(identifier)) {
                 createPaimonTable(paimonCatalog, originalConfig);
+            } else if ("truncate".equalsIgnoreCase(originalConfig.getString(Key.MODE))) {
+                table = paimonCatalog.getTable(identifier);
+                try (BatchTableCommit commit = table.newBatchWriteBuilder().newCommit()) {
+                    commit.truncateTable();
+                } catch (Exception e) {
+                    LOG.error("truncate table failed", e);
+                    throw DataXException.asDataXException(
+                            String.format("truncate表失败: '%s'", tableName));
+                }
             }
             table = paimonCatalog.getTable(identifier);
         } catch (org.apache.paimon.catalog.Catalog.TableNotExistException e) {
@@ -152,7 +166,6 @@ public class PaimonHelper {
         String databaseName = originalConfig.getString(Key.DATABASE);
         String tableName = originalConfig.getString(Key.TABLE);
         Identifier identifier = Identifier.create(databaseName, tableName);
-        
         if (!catalog.databaseExists(databaseName)) {
             try {
                 catalog.createDatabase(databaseName, true);

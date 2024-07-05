@@ -6,9 +6,10 @@
   "hiveConfDir": null,
   "hadoopConfDir": null,
   "database": "nimbus_bigdata_lzk_2",
-  "table": "people2",
+  "table": "people6",
   "primaryKey": "name",
   "partitionKey": null,
+  "mode":"truncate",
   "column": [
     {
       "name": "name",
@@ -22,6 +23,7 @@
   "paimonConf": {
     "full-compaction.delta-commits": "1",
     "file.format": "parquet",
-    "bucket": "1"
+    "bucket": "1",
+    "snapshot.num-retained.min": "5"
   }
 }
