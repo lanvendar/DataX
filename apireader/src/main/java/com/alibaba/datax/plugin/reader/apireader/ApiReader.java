@@ -97,13 +97,22 @@ public class ApiReader extends Reader {
             ApiResultDto<ChainsResultDto> result = ApiRequestExecutor.invoke(apiRequestDto, callChainDto);
             AbstractSchema abstractSchema = result.getItems().getSchema();
             List<AbstractSchema> schemaList;
-            try {
+            if (abstractSchema instanceof ArraySchema) {
                 schemaList = ((ObjectSchema) ((ArraySchema) abstractSchema).getItems()).getProperties();
-            } catch (Exception e) {
-                log.error("获取schema失败", e);
-                throw new RuntimeException("获取schema失败");
+            } else {//ObjectSchema
+                schemaList = ((ObjectSchema) abstractSchema).getProperties();
             }
-            ArrayNode resultArrayNode = JacksonUtils.tryObj2ArrayNode(result.getItems().getParserResult());
+            Object parserResult = result.getItems().getParserResult();
+            ArrayNode resultArrayNode = JacksonUtils.createArrayNode();
+            if (parserResult instanceof ArrayNode) {
+                resultArrayNode = JacksonUtils.tryObj2ArrayNode(parserResult);
+            } else {//ObjectNode
+                try {
+                    resultArrayNode.add(JacksonUtils.obj2ObjectNode(parserResult));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             for (JsonNode jsonNode : resultArrayNode) {
                 ObjectNode objNode;
                 Record record = recordSender.createRecord();
