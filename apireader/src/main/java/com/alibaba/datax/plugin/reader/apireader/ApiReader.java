@@ -94,7 +94,13 @@ public class ApiReader extends Reader {
             CallChainDto callChainDto = JacksonUtils.tryStr2Bean(apiInfo, CallChainDto.class);
             ApiRequestDto apiRequestDto = new ApiRequestDto();
             apiRequestDto.setId(callChainDto.getChainId());
-            ApiResultDto<ChainsResultDto> result = ApiRequestExecutor.invoke(apiRequestDto, callChainDto);
+            ApiResultDto<ChainsResultDto> result;
+            try {
+                result = ApiRequestExecutor.invoke(apiRequestDto, callChainDto);
+            } catch (Exception e) {
+                log.error("调用apihub失败", e);
+                return;
+            }
             AbstractSchema abstractSchema = result.getItems().getSchema();
             List<AbstractSchema> schemaList;
             if (abstractSchema instanceof ArraySchema) {
