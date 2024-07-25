@@ -141,6 +141,7 @@
         <!-- [dataX源码修改] 增加自定义集合打包模块 -->
         <module>packaging/datax-bundle</module>
         <module>paimonwriter</module>
+        <module>paimonreader</module>
 
     </modules>
 

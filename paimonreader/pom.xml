@@ -9,9 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     
-    <artifactId>paimonwriter</artifactId>
-    <name>paimonwriter</name>
-    <description>PaimonWriter提供了写入Paimon功能.</description>
+    <artifactId>paimonreader</artifactId>
+    <name>paimonreader</name>
+    <description>PaimonReader提供了读取Paimon功能.</description>
     <packaging>jar</packaging>
     <properties>
         <!-- [dataX源码修改] hive版本调整 -->
@@ -94,6 +94,11 @@
             <groupId>org.apache.hive.hcatalog</groupId>
             <artifactId>hive-hcatalog-core</artifactId>
             <version>${hive.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.1.12</version>
         </dependency>
         <!-- for test -->
         <dependency>

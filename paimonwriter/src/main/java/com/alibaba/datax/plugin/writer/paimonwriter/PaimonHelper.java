@@ -138,11 +138,11 @@ public class PaimonHelper {
         Schema.Builder schemaBuilder = Schema.newBuilder();
         //建表主键
         if (null != originalConfig.getString(Key.PRIMARY_KEY)) {
-            schemaBuilder.primaryKey(originalConfig.getString(Key.PRIMARY_KEY));
+            schemaBuilder.primaryKey(originalConfig.getString(Key.PRIMARY_KEY).split(","));
         }
         //建表分区
         if (null != originalConfig.getString(Key.PARTITION_KEY)) {
-            schemaBuilder.partitionKeys(originalConfig.getString(Key.PARTITION_KEY));
+            schemaBuilder.partitionKeys(originalConfig.getString(Key.PARTITION_KEY).split(","));
             options.put(CoreOptions.METASTORE_PARTITIONED_TABLE.key(), "true");
         }
         //建表字段

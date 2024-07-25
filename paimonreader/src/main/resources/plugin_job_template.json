@@ -1,0 +1,13 @@
+{
+    "name": "paimonreader",
+    "parameter": {
+        "warehouse": "",
+        "metastore": "",
+        "uri": "",
+        "hiveConfDir": "",
+        "hadoopConfDir": "",
+        "database": "",
+        "table": "",
+        "sql": ""
+    }
+}

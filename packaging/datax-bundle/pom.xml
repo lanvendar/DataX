@@ -127,6 +127,11 @@
         </dependency>
         <dependency>
             <groupId>com.alibaba.datax</groupId>
+            <artifactId>paimonreader</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.datax</groupId>
             <artifactId>paimonwriter</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -343,6 +348,7 @@
                                     <include>com.alibaba.datax:txtfilereader</include>
                                     <include>com.alibaba.datax:txtfilewriter</include>
                                     <include>com.alibaba.datax:apireader</include>
+                                    <include>com.alibaba.datax:paimonreader</include>
                                     <include>com.alibaba.datax:paimonwriter</include>
 
 
@@ -718,12 +724,18 @@
                                 <copy file="../../../apireader/src/main/resources/plugin_job_template.json"
                                       tofile="${project.build.directory}/datax/plugin/reader/apireader/plugin_job_template.json"/>
                                 
+                                <!-- paimonreader -->
+                                <copy file="../../../paimonreader/src/main/resources/plugin.json"
+                                    tofile="${project.build.directory}/datax/plugin/reader/paimonreader/plugin.json"/>
+                                <copy file="../../../paimonreader/src/main/resources/plugin_job_template.json"
+                                    tofile="${project.build.directory}/datax/plugin/reader/paimonreader/plugin_job_template.json"/>
+                                
                                 <!-- paimonwriter -->
                                 <copy file="../../../paimonwriter/src/main/resources/plugin.json"
                                     tofile="${project.build.directory}/datax/plugin/writer/paimonwriter/plugin.json"/>
                                 <copy file="../../../paimonwriter/src/main/resources/plugin_job_template.json"
                                     tofile="${project.build.directory}/datax/plugin/writer/paimonwriter/plugin_job_template.json"/>
-
+                                
                                 <!-- 定义tar.gz文件的目标路径 -->
                                 <property name="tgz.archive"
                                           value="${project.build.directory}/${project.artifactId}.tar.gz"/>
