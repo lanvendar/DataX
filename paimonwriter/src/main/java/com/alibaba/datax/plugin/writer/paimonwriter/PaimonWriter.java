@@ -102,15 +102,13 @@ public class PaimonWriter extends Writer {
                 BatchWriteBuilder writeBuilder = table.newBatchWriteBuilder().withOverwrite();
                 BatchTableWrite write = writeBuilder.newWrite();
                 Record record;
+                boolean hasRecord = false;
                 while ((record = lineReceiver.getFromReader()) != null) {
                     if (record.getColumnNumber() != columnSize) {
                         // 源头读取字段列数与目的表字段写入列数不相等，直接报错
-                        throw DataXException
-                                .asDataXException(
-                                    String.format(
-                                        "列配置信息有错误. 因为您配置的任务中，源头读取字段数:%s 与 目的表要写入的字段数:%s 不相等. 请检查您的配置并作出修改.",
-                                        record.getColumnNumber(),
-                                        columnSize));
+                        throw DataXException.asDataXException(String.format(
+                                "列配置信息有错误. 因为您配置的任务中，源头读取字段数:%s 与 目的表要写入的字段数:%s 不相等. 请检查您的配置并作出修改.",
+                                record.getColumnNumber(), columnSize));
                     }
                     GenericRow writeRecord = new GenericRow(columnSize);
                     
@@ -119,36 +117,39 @@ public class PaimonWriter extends Writer {
                         writeRecord.setField(i, parseValue(col, columnTypes.get(i)));
                     }
                     write.write(writeRecord);
+                    hasRecord = true;
                 }
                 
-                try {
-                    write.compact(BinaryRow.EMPTY_ROW, 0, true);
-                } catch (Exception e) {
-                    LOG.error("compaction error", e);
-                    throw e;
-                }
-                
-                List<CommitMessage> messages = null;
-                BatchTableCommit commit = null;
-                try {
-                    messages = write.prepareCommit();
-                    
-                    // 3. Collect all CommitMessages to a global node and commit
-                    commit = writeBuilder.newCommit();
-                    commit.commit(messages);
-                    
-                } catch (Exception e) {
-                    LOG.error("commit paimon表失败", e);
-                    if (commit != null) {
-                        commit.abort(messages);
+                if (hasRecord) {
+                    try {
+                        write.compact(BinaryRow.EMPTY_ROW, 0, true);
+                    } catch (Exception e) {
+                        LOG.error("compaction error", e);
+                        throw e;
                     }
-                    throw e;
-                } finally {
-                    if (commit != null) {
-                        commit.close();
+                    
+                    List<CommitMessage> messages = null;
+                    BatchTableCommit commit = null;
+                    try {
+                        messages = write.prepareCommit();
+                        
+                        // 3. Collect all CommitMessages to a global node and commit
+                        commit = writeBuilder.newCommit();
+                        commit.commit(messages);
+                        
+                    } catch (Exception e) {
+                        LOG.error("commit paimon表失败", e);
+                        if (commit != null) {
+                            commit.abort(messages);
+                        }
+                        throw e;
+                    } finally {
+                        if (commit != null) {
+                            commit.close();
+                        }
                     }
                 }
-            } catch (Exception e) {
+            } catch(Exception e){
                 LOG.error("写入Paimon表失败", e);
                 throw DataXException.asDataXException(e.getMessage());
             }

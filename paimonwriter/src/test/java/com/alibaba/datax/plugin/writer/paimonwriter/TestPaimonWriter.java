@@ -13,15 +13,16 @@
 
 package com.alibaba.datax.plugin.writer.paimonwriter;
 
-import com.alibaba.datax.common.element.LongColumn;
 import com.alibaba.datax.common.element.Record;
-import com.alibaba.datax.common.element.StringColumn;
 import com.alibaba.datax.common.util.Configuration;
-import com.alibaba.datax.core.transport.record.DefaultRecord;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 
 /**
@@ -50,21 +51,47 @@ public class TestPaimonWriter {
         
         LinkedList<Record> list = new LinkedList<>();
         
-        DefaultRecord record1 = new DefaultRecord();
-        record1.setColumn(0, new StringColumn("张三a"));
-        record1.setColumn(1, new LongColumn(39));
-        
-        DefaultRecord record2 = new DefaultRecord();
-        record2.setColumn(0, new StringColumn("王五a"));
-        record2.setColumn(1, new LongColumn(49));
-        
-        list.add(record1);
-        list.add(record2);
+        //DefaultRecord record1 = new DefaultRecord();
+        //record1.setColumn(0, new StringColumn("张三a"));
+        //record1.setColumn(1, new LongColumn(39));
+        //
+        //DefaultRecord record2 = new DefaultRecord();
+        //record2.setColumn(0, new StringColumn("王五a"));
+        //record2.setColumn(1, new LongColumn(49));
+        //
+        //list.add(record1);
+        //list.add(record2);
         
         SimpleRecordReceiver recordReceiver = new SimpleRecordReceiver(list);
         
         task.startWrite(recordReceiver);
         
         log.info("结束");
+    }
+    
+    @Test
+    public void my() {
+        // 当前日期
+        LocalDate today = LocalDate.now();
+        
+        // 过去一年的日期
+        LocalDate oneYearAgo = today.minusYears(1);
+        
+        // 创建日期格式器
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        
+        // 生成日期列表
+        ArrayList<String> dateList = new ArrayList<>();
+        for (LocalDate date = oneYearAgo; !date.isAfter(today); date = date.plusDays(1)) {
+            dateList.add(date.format(formatter));
+        }
+        
+        // 倒序排序
+        Collections.reverse(dateList);
+        
+        // 输出日期列表
+        for (String date : dateList) {
+            System.out.println(date);
+        }
     }
 }

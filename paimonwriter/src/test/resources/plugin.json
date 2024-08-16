@@ -9,7 +9,7 @@
   "table": "people6",
   "primaryKey": "name",
   "partitionKey": null,
-  "mode":"truncate",
+  "mode":"upsert",
   "column": [
     {
       "name": "name",
