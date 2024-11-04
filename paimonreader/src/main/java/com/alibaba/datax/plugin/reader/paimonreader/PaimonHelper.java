@@ -127,25 +127,25 @@ public class PaimonHelper {
             DataType dataType = projection == null ? rowType.getTypeAt(i) : rowType.getTypeAt(projection[i]);
             
             if (dataType instanceof BooleanType) {
-                record.addColumn(new BoolColumn(r.getBoolean(i)));
+                record.addColumn(new BoolColumn(r.isNullAt(i) ? null : r.getBoolean(i)));
             } else if (dataType instanceof IntType) {
-                record.addColumn(new LongColumn(r.getInt(i)));
+                record.addColumn(new LongColumn(r.isNullAt(i) ? null : r.getInt(i)));
             } else if (dataType instanceof BigIntType) {
-                record.addColumn(new LongColumn(r.getLong(i)));
+                record.addColumn(new LongColumn(r.isNullAt(i) ? null : r.getLong(i)));
             } else if (dataType instanceof SmallIntType) {
-                record.addColumn(new LongColumn(r.getShort(i) + ""));
+                record.addColumn(new LongColumn(r.isNullAt(i) ? null : r.getShort(i) + ""));
             } else if (dataType instanceof FloatType) {
-                record.addColumn(new DoubleColumn(r.getFloat(i)));
+                record.addColumn(new DoubleColumn(r.isNullAt(i) ? null : r.getFloat(i)));
             } else if (dataType instanceof DoubleType) {
-                record.addColumn(new DoubleColumn(r.getDouble(i)));
+                record.addColumn(new DoubleColumn(r.isNullAt(i) ? null : r.getDouble(i)));
             } else if (dataType instanceof VarCharType) {
-                record.addColumn(new StringColumn(r.getString(i).toString()));
+                record.addColumn(new StringColumn(r.isNullAt(i) ? null : r.getString(i).toString()));
             } else if (dataType instanceof DecimalType) {
-                record.addColumn(new DoubleColumn(r.getDouble(i)));
+                record.addColumn(new DoubleColumn(r.isNullAt(i) ? null : r.getDouble(i)));
             } else if (dataType instanceof TimestampType) {
-                record.addColumn(new DateColumn(r.getTimestamp(i, 0).toSQLTimestamp()));
+                record.addColumn(new DateColumn(r.isNullAt(i) ? null : r.getTimestamp(i, 0).toSQLTimestamp()));
             } else {
-                record.addColumn(new StringColumn(new String(r.getBinary(i))));
+                record.addColumn(new StringColumn(r.isNullAt(i) ? null : new String(r.getBinary(i))));
             }
         }
         

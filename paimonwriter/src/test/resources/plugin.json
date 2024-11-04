@@ -6,8 +6,8 @@
   "hiveConfDir": null,
   "hadoopConfDir": null,
   "database": "nimbus_bigdata_lzk_2",
-  "table": "people6",
-  "primaryKey": "name",
+  "table": "people7",
+  "primaryKey": null,
   "partitionKey": null,
   "mode":"upsert",
   "column": [

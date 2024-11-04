@@ -13,8 +13,11 @@
 
 package com.alibaba.datax.plugin.writer.paimonwriter;
 
+import com.alibaba.datax.common.element.LongColumn;
 import com.alibaba.datax.common.element.Record;
+import com.alibaba.datax.common.element.StringColumn;
 import com.alibaba.datax.common.util.Configuration;
+import com.alibaba.datax.core.transport.record.DefaultRecord;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,16 +54,16 @@ public class TestPaimonWriter {
         
         LinkedList<Record> list = new LinkedList<>();
         
-        //DefaultRecord record1 = new DefaultRecord();
-        //record1.setColumn(0, new StringColumn("张三a"));
-        //record1.setColumn(1, new LongColumn(39));
-        //
-        //DefaultRecord record2 = new DefaultRecord();
-        //record2.setColumn(0, new StringColumn("王五a"));
-        //record2.setColumn(1, new LongColumn(49));
-        //
-        //list.add(record1);
-        //list.add(record2);
+        DefaultRecord record1 = new DefaultRecord();
+        record1.setColumn(0, new StringColumn("张三a"));
+        record1.setColumn(1, new LongColumn(39));
+
+        DefaultRecord record2 = new DefaultRecord();
+        record2.setColumn(0, new StringColumn("王五a"));
+        record2.setColumn(1, new LongColumn(49));
+
+        list.add(record1);
+        list.add(record2);
         
         SimpleRecordReceiver recordReceiver = new SimpleRecordReceiver(list);
         
