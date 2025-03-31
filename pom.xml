@@ -39,8 +39,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <mysql.driver.version>5.1.47</mysql.driver.version>
-        <apihub.version>3.6.0-SNAPSHOT</apihub.version>
-
+        <apihub.version>3.7.0-SNAPSHOT</apihub.version>
     </properties>
 
     <modules>
@@ -57,6 +56,7 @@
         <module>oraclereader</module>
         <module>cassandrareader</module>
         <!--<module>oceanbasev10reader</module>-->
+        <!--<module>obhbasereader</module>-->
         <module>rdbmsreader</module>
 
         <!--<module>odpsreader</module>
@@ -97,6 +97,7 @@
         <module>kingbaseeswriter</module>
         <!--<module>adswriter</module>-->
         <!--<module>oceanbasev10writer</module>-->
+        <!--<module>obhbasewriter</module>-->
         <!--<module>adbpgwriter</module>-->
         <!--<module>hologresjdbcwriter</module>-->
         <module>rdbmswriter</module>
@@ -130,8 +131,8 @@
         <module>selectdbwriter</module>
         <module>adbmysqlwriter</module>
         <module>sybasewriter</module>
-        <module>neo4jwriter</module>-->
-
+        <module>neo4jwriter</module>
+        <module>milvuswriter</module> -->
         <!-- common support module -->
         <module>plugin-rdbms-util</module>
         <module>plugin-unstructured-storage-util</module>
