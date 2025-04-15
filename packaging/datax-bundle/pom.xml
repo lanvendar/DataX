@@ -350,6 +350,8 @@
                                     <include>com.alibaba.datax:apireader</include>
                                     <include>com.alibaba.datax:paimonreader</include>
                                     <include>com.alibaba.datax:paimonwriter</include>
+                                    <include>com.alibaba.datax:starrocksreader</include>
+                                    <include>com.alibaba.datax:starrockswriter</include>
 
 
                                     <!-- 依赖导入 -->
@@ -729,13 +731,21 @@
                                     tofile="${project.build.directory}/datax/plugin/reader/paimonreader/plugin.json"/>
                                 <copy file="../../../paimonreader/src/main/resources/plugin_job_template.json"
                                     tofile="${project.build.directory}/datax/plugin/reader/paimonreader/plugin_job_template.json"/>
-                                
                                 <!-- paimonwriter -->
                                 <copy file="../../../paimonwriter/src/main/resources/plugin.json"
                                     tofile="${project.build.directory}/datax/plugin/writer/paimonwriter/plugin.json"/>
                                 <copy file="../../../paimonwriter/src/main/resources/plugin_job_template.json"
                                     tofile="${project.build.directory}/datax/plugin/writer/paimonwriter/plugin_job_template.json"/>
-                                
+
+                                <!-- starrocksreader -->
+                                <copy file="../../../starrocksreader/src/main/resources/plugin.json"
+                                    tofile="${project.build.directory}/datax/plugin/reader/starrocksreader/plugin.json"/>
+                                <!-- starrockswriter -->
+                                <copy file="../../../starrockswriter/src/main/resources/plugin.json"
+                                    tofile="${project.build.directory}/datax/plugin/writer/starrockswriter/plugin.json"/>
+                                <copy file="../../../starrockswriter/src/main/resources/plugin_job_template.json"
+                                    tofile="${project.build.directory}/datax/plugin/writer/starrockswriter/plugin_job_template.json"/>
+
                                 <!-- 定义tar.gz文件的目标路径 -->
                                 <property name="tgz.archive"
                                           value="${project.build.directory}/${project.artifactId}.tar.gz"/>
