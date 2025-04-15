@@ -165,6 +165,16 @@
             <artifactId>txtfilewriter</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.alibaba.datax</groupId>
+            <artifactId>starrocksreader</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.datax</groupId>
+            <artifactId>starrockswriter</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- 公共依赖 -->
         <dependency>
             <groupId>com.google.guava</groupId>
