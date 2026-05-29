@@ -103,10 +103,8 @@ public class PaimonHelper {
             //if ("truncate".equalsIgnoreCase(originalConfig.getString(Key.MODE))) {
             //    paimonCatalog.dropTable(identifier, true);
             //}
-            if (!paimonCatalog.tableExists(identifier)) {
-                createPaimonTable(paimonCatalog, originalConfig);
-            } else if ("truncate".equalsIgnoreCase(originalConfig.getString(Key.MODE))) {
-                table = paimonCatalog.getTable(identifier);
+            table = paimonCatalog.getTable(identifier);
+            if ("truncate".equalsIgnoreCase(originalConfig.getString(Key.MODE))) {
                 try (BatchTableCommit commit = table.newBatchWriteBuilder().newCommit()) {
                     commit.truncateTable();
                 } catch (Exception e) {
@@ -115,11 +113,15 @@ public class PaimonHelper {
                             String.format("truncate表失败: '%s'", tableName));
                 }
             }
-            table = paimonCatalog.getTable(identifier);
         } catch (org.apache.paimon.catalog.Catalog.TableNotExistException e) {
             LOG.error("table {} not exist, create it", tableName);
-            throw DataXException.asDataXException(
-                    String.format("表不存在: '%s'", tableName));
+            createPaimonTable(paimonCatalog, originalConfig);
+            try {
+                table = paimonCatalog.getTable(identifier);
+            } catch (Catalog.TableNotExistException ex) {
+                throw DataXException.asDataXException(
+                        String.format("表不存在: '%s'", tableName));
+            }
         }
         return table;
     }
@@ -166,11 +168,13 @@ public class PaimonHelper {
         String databaseName = originalConfig.getString(Key.DATABASE);
         String tableName = originalConfig.getString(Key.TABLE);
         Identifier identifier = Identifier.create(databaseName, tableName);
-        if (!catalog.databaseExists(databaseName)) {
+        try {
+            catalog.getDatabase(databaseName);
+        } catch (Catalog.DatabaseNotExistException e) {
             try {
                 catalog.createDatabase(databaseName, true);
-            } catch (Catalog.DatabaseAlreadyExistException e) {
-                LOG.error("database " + databaseName + " is already exist error: " + e.getMessage());
+            } catch (Catalog.DatabaseAlreadyExistException ex) {
+                LOG.error("database " + databaseName + " is already exist error: " + ex.getMessage());
                 throw DataXException.asDataXException(
                         String.format("database已存在: '%s'", databaseName));
             }

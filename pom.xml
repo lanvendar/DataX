@@ -33,6 +33,7 @@
         <junit-version>4.13.1</junit-version>
         <tddl.version>5.1.22-1</tddl.version>
         <swift-version>1.0.0</swift-version>
+        <paimon.version>1.4.1</paimon.version>
 
         <project-sourceEncoding>UTF-8</project-sourceEncoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
