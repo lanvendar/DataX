@@ -13,36 +13,14 @@
 
 package com.alibaba.datax.plugin.reader.paimonreader;
 
-import com.alibaba.datax.common.element.BoolColumn;
-import com.alibaba.datax.common.element.DateColumn;
-import com.alibaba.datax.common.element.DoubleColumn;
-import com.alibaba.datax.common.element.LongColumn;
-import com.alibaba.datax.common.element.Record;
-import com.alibaba.datax.common.element.StringColumn;
 import com.alibaba.datax.common.exception.DataXException;
-import com.alibaba.datax.common.plugin.RecordSender;
 import com.alibaba.datax.common.util.Configuration;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.CatalogContext;
 import org.apache.paimon.catalog.CatalogFactory;
 import org.apache.paimon.catalog.Identifier;
-import org.apache.paimon.data.InternalRow;
-import org.apache.paimon.fs.Path;
-import org.apache.paimon.hive.HiveCatalogOptions;
-import org.apache.paimon.options.CatalogOptions;
 import org.apache.paimon.options.Options;
 import org.apache.paimon.table.Table;
-import org.apache.paimon.types.BigIntType;
-import org.apache.paimon.types.BooleanType;
-import org.apache.paimon.types.DataType;
-import org.apache.paimon.types.DecimalType;
-import org.apache.paimon.types.DoubleType;
-import org.apache.paimon.types.FloatType;
-import org.apache.paimon.types.IntType;
-import org.apache.paimon.types.RowType;
-import org.apache.paimon.types.SmallIntType;
-import org.apache.paimon.types.TimestampType;
-import org.apache.paimon.types.VarCharType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,34 +42,7 @@ public class PaimonHelper {
      * @return catalog对象.
      */
     static Catalog createPaimonCatalog(Configuration originalConfig) {
-        Options options = new Options();
-        // warehouse: root path of catalog
-        if (null != originalConfig.getString(Key.WAREHOUSE)) {
-            String warehouse = originalConfig.getString(Key.WAREHOUSE);
-            options.set(CatalogOptions.WAREHOUSE.key(), new Path(warehouse).toUri().toString());
-        }
-        //metastore: Metastore of paimon catalog, supports filesystem and hive, default is filesystem
-        if (null != originalConfig.getString(Key.METASTORE)) {
-            options.set(CatalogOptions.METASTORE.key(), originalConfig.getString(Key.METASTORE));
-        } else {
-            options.set(CatalogOptions.METASTORE.key(), "hive");
-        }
-        if (null != originalConfig.getString(Key.URI)) {
-            options.set(CatalogOptions.URI.key(), originalConfig.getString(Key.URI));
-        }
-        if (null != originalConfig.getString(Key.TABLE_TYPE)) {
-            options.set(CatalogOptions.TABLE_TYPE.key(),
-                    originalConfig.getString(Key.TABLE_TYPE));
-        }
-        if (null != originalConfig.getString(Key.HIVE_CONF_DIR)) {
-            options.set(HiveCatalogOptions.HIVE_CONF_DIR.key(),
-                    originalConfig.getString(Key.HIVE_CONF_DIR));
-        }
-        if (null != originalConfig.getString(Key.HADOOP_CONF_DIR)) {
-            options.set(HiveCatalogOptions.HADOOP_CONF_DIR.key(),
-                    originalConfig.getString(Key.HADOOP_CONF_DIR));
-        }
-        
+        Options options = PaimonConfigUtil.buildCatalogOptions(originalConfig);
         CatalogContext context = CatalogContext.create(options);
         return CatalogFactory.createCatalog(context);
     }
@@ -103,8 +54,8 @@ public class PaimonHelper {
      */
     static Table getPaimonTable(Configuration originalConfig) {
         Catalog paimonCatalog = createPaimonCatalog(originalConfig);
-        String databaseName = originalConfig.getString(Key.DATABASE);
-        String tableName = originalConfig.getString(Key.TABLE);
+        String databaseName = PaimonConfigUtil.database(originalConfig);
+        String tableName = originalConfig.getString(ConfigKey.TABLE);
         
         Identifier identifier = Identifier.create(databaseName, tableName);
         Table table = null;
@@ -116,39 +67,5 @@ public class PaimonHelper {
                     String.format("表不存在: '%s'", tableName));
         }
         return table;
-    }
-    
-    static Record convertRecord(RecordSender recordSender, InternalRow r, RowType rowType, int[] projection) {
-        Record record = recordSender.createRecord();
-        
-        int fieldCount = projection == null ? rowType.getFieldCount() : projection.length;
-        
-        for (int i = 0; i < fieldCount; i++) {
-            DataType dataType = projection == null ? rowType.getTypeAt(i) : rowType.getTypeAt(projection[i]);
-            
-            if (dataType instanceof BooleanType) {
-                record.addColumn(new BoolColumn(r.isNullAt(i) ? null : r.getBoolean(i)));
-            } else if (dataType instanceof IntType) {
-                record.addColumn(new LongColumn(r.isNullAt(i) ? null : r.getInt(i)));
-            } else if (dataType instanceof BigIntType) {
-                record.addColumn(new LongColumn(r.isNullAt(i) ? null : r.getLong(i)));
-            } else if (dataType instanceof SmallIntType) {
-                record.addColumn(new LongColumn(r.isNullAt(i) ? null : r.getShort(i) + ""));
-            } else if (dataType instanceof FloatType) {
-                record.addColumn(new DoubleColumn(r.isNullAt(i) ? null : r.getFloat(i)));
-            } else if (dataType instanceof DoubleType) {
-                record.addColumn(new DoubleColumn(r.isNullAt(i) ? null : r.getDouble(i)));
-            } else if (dataType instanceof VarCharType) {
-                record.addColumn(new StringColumn(r.isNullAt(i) ? null : r.getString(i).toString()));
-            } else if (dataType instanceof DecimalType) {
-                record.addColumn(new DoubleColumn(r.isNullAt(i) ? null : r.getDouble(i)));
-            } else if (dataType instanceof TimestampType) {
-                record.addColumn(new DateColumn(r.isNullAt(i) ? null : r.getTimestamp(i, 0).toSQLTimestamp()));
-            } else {
-                record.addColumn(new StringColumn(r.isNullAt(i) ? null : new String(r.getBinary(i))));
-            }
-        }
-        
-        return record;
     }
 }

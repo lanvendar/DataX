@@ -1,6 +1,6 @@
 {
     "name": "paimonreader",
     "class": "com.alibaba.datax.plugin.reader.paimonreader.PaimonReader",
-    "description": "useScene: prod. mechanism: Jdbc connection using the database, execute select sql. warn: The more you know about the database, the less problems you encounter.",
+    "description": "useScene: prod. mechanism: read Apache Paimon tables on S3/Ceph with projection and simple predicate pushdown.",
     "developer": "alibaba"
 }

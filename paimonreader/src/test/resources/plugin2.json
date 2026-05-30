@@ -1,12 +1,14 @@
 {
-  "warehouse": "hdfs:///paimon/data",
-  "metastore": "hive",
-  "uri": "thrift://bd02:9083",
-  "tableType": "external",
-  "hiveConfDir": null,
-  "hadoopConfDir": null,
-  "database": "bigdata_proj",
-  "table": "dwm_bdmm_data_count",
-//  "table": "dwm_pds_transformer_ts_quarter_hour",
+  "connectType": "S3",
+  "options": {
+    "warehouse": "s3a://bucket/paimon/data",
+    "catalogType": "filesystem",
+    "database": "bigdata_proj",
+    "endpoint": "http://127.0.0.1:9000",
+    "region": "us-east-1",
+    "pathStyleAccess": true,
+    "sslEnabled": false
+  },
+  "table": "test_person2",
   "sql": "select * from test_person2 where day_pt='20240930'"
 }
