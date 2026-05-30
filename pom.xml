@@ -72,7 +72,6 @@
         <module>hdfsreader</module>
         <!--<module>ftpreader</module>-->
         <module>txtfilereader</module>
-        <module>apireader</module>
 
         <!--<module>streamreader</module>-->
        <!-- <module>clickhousereader</module>-->

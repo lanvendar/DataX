@@ -1,6 +1,0 @@
-{
-    "name": "apireader",
-    "class": "com.alibaba.datax.plugin.reader.apireader.ApiReader",
-    "description": "request api ",
-    "developer": "nimbus"
-}

@@ -62,11 +62,6 @@
         </dependency>
         <dependency>
             <groupId>com.alibaba.datax</groupId>
-            <artifactId>apireader</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.datax</groupId>
             <artifactId>rdbmsreader</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -139,6 +134,11 @@
             <groupId>org.apache.paimon</groupId>
             <artifactId>paimon-bundle</artifactId>
             <version>${paimon.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-aws</artifactId>
+            <version>${hadoop.version}</version>
         </dependency>
         <dependency>
             <groupId>com.alibaba.datax</groupId>
@@ -248,10 +248,10 @@
             <version>8.6.0</version>
         </dependency>
         <!--apihub 接口调用包-->
-        <dependency>
+        <!--<dependency>
             <groupId>com.nimbus</groupId>
             <artifactId>infra-apihub-call</artifactId>
-        </dependency>
+        </dependency>-->
         <!--
         &lt;!&ndash; dm7 dm8 driver &ndash;&gt;
         <dependency>
@@ -362,7 +362,6 @@
                                     <include>com.alibaba.datax:sqlserverwriter</include>
                                     <include>com.alibaba.datax:txtfilereader</include>
                                     <include>com.alibaba.datax:txtfilewriter</include>
-                                    <include>com.alibaba.datax:apireader</include>
                                     <include>com.alibaba.datax:paimonreader</include>
                                     <include>com.alibaba.datax:paimonwriter</include>
                                     <include>com.alibaba.datax:starrocksreader</include>
@@ -469,6 +468,7 @@
                                     <include>org.apache.hadoop:hadoop-yarn-client</include>
                                     <include>org.apache.hadoop:hadoop-yarn-server-resourcemanager</include>
                                     <include>org.apache.hadoop:hadoop-hdfs-client</include>
+                                    <include>org.apache.hadoop:hadoop-aws</include>
                                     <include>org.apache.hadoop:hadoop-yarn-api</include>
                                     <include>org.apache.hadoop:hadoop-yarn-server-applicationhistoryservice</include>
                                     <include>org.apache.hadoop:hadoop-yarn-server-web-proxy</include>
@@ -601,6 +601,7 @@
                                     <include>org.hamcrest:hamcrest-core</include>
                                     <include>com.nimbus:infra-apihub-call</include>
                                     <include>org.apache.paimon:paimon-bundle</include>
+                                    <include>com.amazonaws:aws-java-sdk-bundle</include>
                                 </includes>
                                 <excludes>
                                     <exclude>org.eclipse.jdt.core.compiler:ecj</exclude>
@@ -734,12 +735,6 @@
                                       tofile="${project.build.directory}/datax/plugin/writer/txtfilewriter/plugin.json"/>
                                 <copy file="../../../txtfilewriter/src/main/resources/plugin_job_template.json"
                                       tofile="${project.build.directory}/datax/plugin/writer/txtfilewriter/plugin_job_template.json"/>
-
-                                <!-- apireader -->
-                                <copy file="../../../apireader/src/main/resources/plugin.json"
-                                      tofile="${project.build.directory}/datax/plugin/reader/apireader/plugin.json"/>
-                                <copy file="../../../apireader/src/main/resources/plugin_job_template.json"
-                                      tofile="${project.build.directory}/datax/plugin/reader/apireader/plugin_job_template.json"/>
                                 
                                 <!-- paimonreader -->
                                 <copy file="../../../paimonreader/src/main/resources/plugin.json"
