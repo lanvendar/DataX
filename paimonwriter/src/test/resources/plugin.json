@@ -1,15 +1,25 @@
 {
-  "warehouse": "hdfs:///paimon/test-data",
-  "metastore": "hive",
-  "uri": "thrift://bd02:9083",
-  "tableType": "external",
-  "hiveConfDir": null,
-  "hadoopConfDir": null,
-  "database": "nimbus_bigdata_lzk_2",
-  "table": "people7",
-  "primaryKey": null,
+  "connectType": "S3",
+  "options": {
+    "warehouse": "s3a://bucket/paimon/test-data",
+    "catalogType": "filesystem",
+    "database": "nimbus_bigdata_lzk_2",
+    "endpoint": "http://127.0.0.1:9000",
+    "region": "us-east-1",
+    "pathStyleAccess": true,
+    "sslEnabled": false
+  },
+  "table": "peopletest",
+  "loadMode": "APPEND",
+  "write": {
+    "batchSize": 1000,
+    "overwritePartition": {
+      "enabled": false,
+      "partition": {}
+    }
+  },
+  "primaryKey": "",
   "partitionKey": null,
-  "mode":"upsert",
   "column": [
     {
       "name": "name",
@@ -20,10 +30,12 @@
       "type": "int"
     }
   ],
-  "paimonConf": {
-    "full-compaction.delta-commits": "1",
-    "file.format": "parquet",
-    "bucket": "1",
-    "snapshot.num-retained.min": "5"
+  "sink": {
+    "options": {
+      "full-compaction.delta-commits": "1",
+      "file.format": "parquet",
+      "bucket": "1",
+      "snapshot.num-retained.min": "5"
+    }
   }
 }

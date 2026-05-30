@@ -14,23 +14,15 @@
 package com.alibaba.datax.plugin.writer.paimonwriter;
 
 
-import com.alibaba.datax.common.element.Column;
 import com.alibaba.datax.common.element.Record;
 import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.common.plugin.RecordReceiver;
+import com.alibaba.datax.common.plugin.TaskPluginCollector;
 import com.alibaba.datax.common.spi.Writer;
 import com.alibaba.datax.common.util.Configuration;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.paimon.data.BinaryRow;
-import org.apache.paimon.data.BinaryString;
-import org.apache.paimon.data.Decimal;
 import org.apache.paimon.data.GenericRow;
-import org.apache.paimon.data.Timestamp;
 import org.apache.paimon.table.Table;
-import org.apache.paimon.table.sink.BatchTableCommit;
-import org.apache.paimon.table.sink.BatchTableWrite;
-import org.apache.paimon.table.sink.BatchWriteBuilder;
-import org.apache.paimon.table.sink.CommitMessage;
+import org.apache.paimon.types.RowKind;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,92 +83,35 @@ public class PaimonWriter extends Writer {
         
         private Table table;
         
-        private List<Pair<String, String>> columns;
+        private PaimonWriteConfig writeConfig;
         
-        private List<String> columnTypes;
+        private PaimonRecordConverter recordConverter;
         
         @Override
         public void startWrite(RecordReceiver lineReceiver) {
+            PaimonBatchWriter writer = null;
             try {
-                int columnSize = columns.size();
-                BatchWriteBuilder writeBuilder = table.newBatchWriteBuilder().withOverwrite();
-                BatchTableWrite write = writeBuilder.newWrite();
+                writer = new PaimonBatchWriter(table, writeConfig);
                 Record record;
-                boolean hasRecord = false;
+                TaskPluginCollector collector = super.getTaskPluginCollector();
                 while ((record = lineReceiver.getFromReader()) != null) {
-                    if (record.getColumnNumber() != columnSize) {
-                        // 源头读取字段列数与目的表字段写入列数不相等，直接报错
-                        throw DataXException.asDataXException(String.format(
-                                "列配置信息有错误. 因为您配置的任务中，源头读取字段数:%s 与 目的表要写入的字段数:%s 不相等. 请检查您的配置并作出修改.",
-                                record.getColumnNumber(), columnSize));
-                    }
-                    GenericRow writeRecord = new GenericRow(columnSize);
-                    
-                    for (int i = 0; i < columnSize; i++) {
-                        Column col = record.getColumn(i);
-                        writeRecord.setField(i, parseValue(col, columnTypes.get(i)));
-                    }
-                    write.write(writeRecord);
-                    hasRecord = true;
-                }
-                
-                if (hasRecord) {
                     try {
-                        write.compact(BinaryRow.EMPTY_ROW, 0, true);
+                        GenericRow writeRecord = recordConverter.convert(record);
+                        writer.write(writeRecord);
                     } catch (Exception e) {
-                        LOG.error("compaction error", e);
-                        throw e;
-                    }
-                    
-                    List<CommitMessage> messages = null;
-                    BatchTableCommit commit = null;
-                    try {
-                        messages = write.prepareCommit();
-                        
-                        // 3. Collect all CommitMessages to a global node and commit
-                        commit = writeBuilder.newCommit();
-                        commit.commit(messages);
-                        
-                    } catch (Exception e) {
-                        LOG.error("commit paimon表失败", e);
-                        if (commit != null) {
-                            commit.abort(messages);
-                        }
-                        throw e;
-                    } finally {
-                        if (commit != null) {
-                            commit.close();
-                        }
+                        LOG.warn("PaimonWriter转换脏数据失败: {}", e.getMessage());
+                        collector.collectDirtyRecord(record, e, e.getMessage());
                     }
                 }
-            } catch(Exception e){
+                writer.finish();
+                writer = null;
+            } catch (Exception e) {
                 LOG.error("写入Paimon表失败", e);
                 throw DataXException.asDataXException(e.getMessage());
-            }
-        }
-        
-        private static Object parseValue(Column col, String type) {
-            switch (type.toUpperCase()) {
-                case "BOOLEAN":
-                    return col.asBoolean();
-                case "BYTEA":
-                    return col.asBytes();
-                case "SMALLINT":
-                    return col.asLong().shortValue();
-                case "INT":
-                    return col.asBigInteger().intValue();
-                case "BIGINT":
-                    return col.asLong();
-                case "FLOAT":
-                case "DOUBLE":
-                    return col.asBigDecimal().doubleValue();
-                case "DECIMAL":
-                    return Decimal.fromBigDecimal(col.asBigDecimal(), 18, 6);
-                case "TIMESTAMP":
-                case "DATE":
-                    return Timestamp.fromEpochMillis(col.asDate().getTime());
-                default:
-                    return BinaryString.fromString(col.asString());
+            } finally {
+                if (writer != null) {
+                    writer.close();
+                }
             }
         }
         
@@ -184,16 +119,7 @@ public class PaimonWriter extends Writer {
         public void init() {
             System.setProperty("HADOOP_USER_NAME", "root");
             this.taskConfig = super.getPluginJobConf();
-            List<Configuration> columnConfigs = taskConfig.getListConfiguration(Key.COLUMN);
-            columns = new ArrayList<>();
-            columnTypes = new ArrayList<>();
-            columnConfigs.forEach(column -> {
-                String name = column.getString("name");
-                String type = column.getString("type");
-                
-                columns.add(Pair.of(name, type));
-                columnTypes.add(type);
-            });
+            writeConfig = PaimonWriteConfig.from(taskConfig);
         }
         
         @Override
@@ -206,6 +132,9 @@ public class PaimonWriter extends Writer {
             super.prepare();
             try {
                 table = PaimonHelper.getPaimonTable(taskConfig);
+                PaimonTableValidator.validate(table, writeConfig);
+                recordConverter = new PaimonRecordConverter(
+                        writeConfig.getColumns(), table.rowType(), rowKind(), writeConfig.getOverwritePartition());
             } catch (Exception e) {
                 LOG.error("获取Paimon表失败", e);
                 throw e;
@@ -216,6 +145,10 @@ public class PaimonWriter extends Writer {
         @Override
         public void destroy() {
         
+        }
+        
+        private RowKind rowKind() {
+            return writeConfig.getLoadMode() == LoadMode.UPSERT ? RowKind.UPDATE_AFTER : RowKind.INSERT;
         }
     }
 }

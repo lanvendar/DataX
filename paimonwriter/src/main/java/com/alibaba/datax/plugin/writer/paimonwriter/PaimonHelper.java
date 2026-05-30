@@ -15,21 +15,17 @@ package com.alibaba.datax.plugin.writer.paimonwriter;
 
 import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.common.util.Configuration;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.paimon.CoreOptions;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.CatalogContext;
 import org.apache.paimon.catalog.CatalogFactory;
 import org.apache.paimon.catalog.Identifier;
-import org.apache.paimon.fs.Path;
-import org.apache.paimon.hive.HiveCatalogOptions;
-import org.apache.paimon.options.CatalogOptions;
 import org.apache.paimon.options.Options;
 import org.apache.paimon.schema.Schema;
 import org.apache.paimon.table.Table;
-import org.apache.paimon.table.sink.BatchTableCommit;
 import org.apache.paimon.types.DataType;
-import org.apache.paimon.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,34 +51,7 @@ public class PaimonHelper {
      * @return catalog对象.
      */
     static Catalog createPaimonCatalog(Configuration originalConfig) {
-        Options options = new Options();
-        // warehouse: root path of catalog
-        if (null != originalConfig.getString(Key.WAREHOUSE)) {
-            String warehouse = originalConfig.getString(Key.WAREHOUSE);
-            options.set(CatalogOptions.WAREHOUSE.key(), new Path(warehouse).toUri().toString());
-        }
-        //metastore: Metastore of paimon catalog, supports filesystem and hive, default is filesystem
-        if (null != originalConfig.getString(Key.METASTORE)) {
-            options.set(CatalogOptions.METASTORE.key(), originalConfig.getString(Key.METASTORE));
-        } else {
-            options.set(CatalogOptions.METASTORE.key(), "hive");
-        }
-        if (null != originalConfig.getString(Key.URI)) {
-            options.set(CatalogOptions.URI.key(), originalConfig.getString(Key.URI));
-        }
-        if (null != originalConfig.getString(Key.TABLE_TYPE)) {
-            options.set(CatalogOptions.TABLE_TYPE.key(),
-                    originalConfig.getString(Key.TABLE_TYPE));
-        }
-        if (null != originalConfig.getString(Key.HIVE_CONF_DIR)) {
-            options.set(HiveCatalogOptions.HIVE_CONF_DIR.key(),
-                    originalConfig.getString(Key.HIVE_CONF_DIR));
-        }
-        if (null != originalConfig.getString(Key.HADOOP_CONF_DIR)) {
-            options.set(HiveCatalogOptions.HADOOP_CONF_DIR.key(),
-                    originalConfig.getString(Key.HADOOP_CONF_DIR));
-        }
-        
+        Options options = PaimonConfigUtil.buildCatalogOptions(originalConfig);
         CatalogContext context = CatalogContext.create(options);
         return CatalogFactory.createCatalog(context);
     }
@@ -94,25 +63,13 @@ public class PaimonHelper {
      */
     static Table getPaimonTable(Configuration originalConfig) {
         Catalog paimonCatalog = createPaimonCatalog(originalConfig);
-        String databaseName = originalConfig.getString(Key.DATABASE);
-        String tableName = originalConfig.getString(Key.TABLE);
+        String databaseName = PaimonConfigUtil.database(originalConfig);
+        String tableName = originalConfig.getString(ConfigKey.TABLE);
         
         Identifier identifier = Identifier.create(databaseName, tableName);
         Table table = null;
         try {
-            //if ("truncate".equalsIgnoreCase(originalConfig.getString(Key.MODE))) {
-            //    paimonCatalog.dropTable(identifier, true);
-            //}
             table = paimonCatalog.getTable(identifier);
-            if ("truncate".equalsIgnoreCase(originalConfig.getString(Key.MODE))) {
-                try (BatchTableCommit commit = table.newBatchWriteBuilder().newCommit()) {
-                    commit.truncateTable();
-                } catch (Exception e) {
-                    LOG.error("truncate table failed", e);
-                    throw DataXException.asDataXException(
-                            String.format("truncate表失败: '%s'", tableName));
-                }
-            }
         } catch (org.apache.paimon.catalog.Catalog.TableNotExistException e) {
             LOG.error("table {} not exist, create it", tableName);
             createPaimonTable(paimonCatalog, originalConfig);
@@ -132,31 +89,37 @@ public class PaimonHelper {
      * @param catalog Paimon Catalog
      */
     static void createPaimonTable(Catalog catalog, Configuration originalConfig) {
-        Map<String, String> options = originalConfig.getMap(Key.PAIMON_CONF, String.class);
-        if (options == null) {
-            options = new HashMap<>(2);
+        Map<String, Object> rawOptions = originalConfig.getMap(ConfigKey.SINK_OPTIONS);
+        Map<String, String> options = new HashMap<>(2);
+        if (rawOptions != null) {
+            for (Map.Entry<String, Object> entry : rawOptions.entrySet()) {
+                if (entry.getValue() != null) {
+                    options.put(entry.getKey(), String.valueOf(entry.getValue()));
+                }
+            }
         }
         
         Schema.Builder schemaBuilder = Schema.newBuilder();
         //建表主键
-        if (null != originalConfig.getString(Key.PRIMARY_KEY)) {
-            schemaBuilder.primaryKey(originalConfig.getString(Key.PRIMARY_KEY).split(","));
+        if (StringUtils.isNotBlank(originalConfig.getString(ConfigKey.PRIMARY_KEY))) {
+            schemaBuilder.primaryKey(splitKeys(originalConfig.getString(ConfigKey.PRIMARY_KEY)));
         }
         //建表分区
-        if (null != originalConfig.getString(Key.PARTITION_KEY)) {
-            schemaBuilder.partitionKeys(originalConfig.getString(Key.PARTITION_KEY).split(","));
+        if (StringUtils.isNotBlank(originalConfig.getString(ConfigKey.PARTITION_KEY))) {
+            schemaBuilder.partitionKeys(splitKeys(originalConfig.getString(ConfigKey.PARTITION_KEY)));
             options.put(CoreOptions.METASTORE_PARTITIONED_TABLE.key(), "true");
         }
         //建表字段
-        List<Configuration> columns = originalConfig.getListConfiguration(Key.COLUMN);
+        List<Configuration> columns = originalConfig.getListConfiguration(ConfigKey.COLUMN);
+        Validate.notEmpty(columns, "column can't be empty");
         columns.forEach(column -> {
             String name = column.getString("name");
-            Validate.notNull(name, "column.name can't be null");
+            Validate.notBlank(name, "column.name can't be blank");
             
             String type = column.getString("type");
-            Validate.notNull(type, "column.type can't be null");
+            Validate.notBlank(type, "column.type can't be blank");
             
-            DataType dataType = typeMapping(type);
+            DataType dataType = StarRocksTypeParser.parse(type);
             schemaBuilder.column(name, dataType);
         });
         
@@ -165,8 +128,8 @@ public class PaimonHelper {
             schemaBuilder.options(options);
         }
         Schema schema = schemaBuilder.build();
-        String databaseName = originalConfig.getString(Key.DATABASE);
-        String tableName = originalConfig.getString(Key.TABLE);
+        String databaseName = PaimonConfigUtil.database(originalConfig);
+        String tableName = originalConfig.getString(ConfigKey.TABLE);
         Identifier identifier = Identifier.create(databaseName, tableName);
         try {
             catalog.getDatabase(databaseName);
@@ -192,38 +155,10 @@ public class PaimonHelper {
         }
     }
     
-    /**
-     * 字段类型映射方法.
-     *
-     * @param columnType 字段类型字符串
-     * @return paimon的字段类型.
-     * 复杂类型需要支持，如：ARRAY、MAP、STRUCT等,目前暂不支持.
-     */
-    private static DataType typeMapping(String columnType) {
-        columnType = columnType.toUpperCase();
-        switch (columnType) {
-            case "BOOLEAN":
-                return DataTypes.BOOLEAN();
-            case "BYTEA":
-                return DataTypes.BYTES();
-            case "SMALLINT":
-                return DataTypes.SMALLINT();
-            case "INT":
-                return DataTypes.INT();
-            case "BIGINT":
-                return DataTypes.BIGINT();
-            case "FLOAT":
-                return DataTypes.FLOAT();
-            case "DOUBLE":
-                return DataTypes.DOUBLE();
-            case "DECIMAL":
-                return DataTypes.DECIMAL(38, 8);
-            case "TIMESTAMP":
-                return DataTypes.TIMESTAMP();
-            case "DATE":
-                return DataTypes.DATE();
-            default:
-                return DataTypes.STRING();
-        }
+    private static String[] splitKeys(String keys) {
+        return java.util.Arrays.stream(keys.split(","))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .toArray(String[]::new);
     }
 }

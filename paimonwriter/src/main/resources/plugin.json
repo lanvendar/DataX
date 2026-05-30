@@ -1,6 +1,6 @@
 {
     "name": "paimonwriter",
     "class": "com.alibaba.datax.plugin.writer.paimonwriter.PaimonWriter",
-    "description": "useScene: prod. mechanism: Jdbc connection using the database, execute insert sql. warn: The more you know about the database, the less problems you encounter.",
+    "description": "useScene: prod. mechanism: write DataX records into Apache Paimon tables on S3/Ceph. support APPEND, UPSERT and OVERWRITE_PARTITION.",
     "developer": "alibaba"
 }
