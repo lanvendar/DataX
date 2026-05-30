@@ -31,11 +31,9 @@ public class ConfigKey {
     
     public static final String SSL_ENABLED = "options.sslEnabled";
     
-    public static final String WRITE_BATCH_SIZE = "write.batchSize";
+    public static final String BATCH_SIZE = "batchSize";
     
-    public static final String WRITE_OVERWRITE_PARTITION = "write.overwritePartition";
-    
-    public static final String SINK_OPTIONS = "sink.options";
+    public static final String OVERWRITE_PARTITION = "overwritePartition";
     
     public static final String TABLE = "table";
     

@@ -53,9 +53,9 @@ final class PaimonWriteConfig {
         }
         
         LoadMode loadMode = LoadMode.from(taskConfig.getString(ConfigKey.LOAD_MODE, LoadMode.APPEND.name()));
-        int batchSize = taskConfig.getInt(ConfigKey.WRITE_BATCH_SIZE, 1000);
+        int batchSize = taskConfig.getInt(ConfigKey.BATCH_SIZE, 1000);
         if (batchSize <= 0) {
-            throw DataXException.asDataXException("write.batchSize必须大于0");
+            throw DataXException.asDataXException("batchSize必须大于0");
         }
         
         return new PaimonWriteConfig(columns, loadMode, batchSize, parseOverwritePartition(taskConfig, loadMode));
@@ -82,14 +82,14 @@ final class PaimonWriteConfig {
             return null;
         }
         
-        Configuration overwriteConfig = taskConfig.getConfiguration(ConfigKey.WRITE_OVERWRITE_PARTITION);
+        Configuration overwriteConfig = taskConfig.getConfiguration(ConfigKey.OVERWRITE_PARTITION);
         if (overwriteConfig == null || !overwriteConfig.getBool("enabled", false)) {
-            throw DataXException.asDataXException("loadMode=OVERWRITE_PARTITION时必须开启write.overwritePartition.enabled");
+            throw DataXException.asDataXException("loadMode=OVERWRITE_PARTITION时必须开启overwritePartition.enabled");
         }
         
         Map<String, Object> rawPartition = overwriteConfig.getMap("partition");
         if (rawPartition == null || rawPartition.isEmpty()) {
-            throw DataXException.asDataXException("loadMode=OVERWRITE_PARTITION时必须配置write.overwritePartition.partition");
+            throw DataXException.asDataXException("loadMode=OVERWRITE_PARTITION时必须配置overwritePartition.partition");
         }
         
         Map<String, String> partition = new HashMap<>();
@@ -99,7 +99,7 @@ final class PaimonWriteConfig {
             }
         }
         if (partition.isEmpty()) {
-            throw DataXException.asDataXException("loadMode=OVERWRITE_PARTITION时必须配置非空write.overwritePartition.partition");
+            throw DataXException.asDataXException("loadMode=OVERWRITE_PARTITION时必须配置非空overwritePartition.partition");
         }
         return partition;
     }

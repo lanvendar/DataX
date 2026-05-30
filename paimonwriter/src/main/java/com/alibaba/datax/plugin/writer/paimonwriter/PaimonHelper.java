@@ -29,9 +29,10 @@ import org.apache.paimon.types.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Li Zhengkai
@@ -44,6 +45,28 @@ public class PaimonHelper {
      * LOGGER.
      */
     private static final Logger LOG = LoggerFactory.getLogger(PaimonHelper.class);
+    
+    private static final Set<String> NON_TABLE_OPTION_KEYS = new HashSet<>();
+    
+    static {
+        NON_TABLE_OPTION_KEYS.add("warehouse");
+        NON_TABLE_OPTION_KEYS.add("catalogType");
+        NON_TABLE_OPTION_KEYS.add("database");
+        NON_TABLE_OPTION_KEYS.add("endpoint");
+        NON_TABLE_OPTION_KEYS.add("region");
+        NON_TABLE_OPTION_KEYS.add("accessKey");
+        NON_TABLE_OPTION_KEYS.add("accessKeyRef");
+        NON_TABLE_OPTION_KEYS.add("secretKey");
+        NON_TABLE_OPTION_KEYS.add("secretKeyRef");
+        NON_TABLE_OPTION_KEYS.add("pathStyleAccess");
+        NON_TABLE_OPTION_KEYS.add("sslEnabled");
+        NON_TABLE_OPTION_KEYS.add("s3.endpoint");
+        NON_TABLE_OPTION_KEYS.add("s3.region");
+        NON_TABLE_OPTION_KEYS.add("s3.access-key");
+        NON_TABLE_OPTION_KEYS.add("s3.secret-key");
+        NON_TABLE_OPTION_KEYS.add("s3.path-style-access");
+        NON_TABLE_OPTION_KEYS.add("s3.ssl.enabled");
+    }
     
     /**
      * 创建 paimon catalog.
@@ -89,15 +112,7 @@ public class PaimonHelper {
      * @param catalog Paimon Catalog
      */
     static void createPaimonTable(Catalog catalog, Configuration originalConfig) {
-        Map<String, Object> rawOptions = originalConfig.getMap(ConfigKey.SINK_OPTIONS);
-        Map<String, String> options = new HashMap<>(2);
-        if (rawOptions != null) {
-            for (Map.Entry<String, Object> entry : rawOptions.entrySet()) {
-                if (entry.getValue() != null) {
-                    options.put(entry.getKey(), String.valueOf(entry.getValue()));
-                }
-            }
-        }
+        Map<String, String> options = tableOptions(originalConfig);
         
         Schema.Builder schemaBuilder = Schema.newBuilder();
         //建表主键
@@ -153,6 +168,28 @@ public class PaimonHelper {
             throw DataXException.asDataXException(
                     String.format("database不存在: '%s'", databaseName));
         }
+    }
+    
+    private static Map<String, String> tableOptions(Configuration originalConfig) {
+        Map<String, Object> rawOptions = originalConfig.getMap(ConfigKey.OPTIONS);
+        Map<String, String> options = new java.util.HashMap<>(2);
+        if (rawOptions == null) {
+            return options;
+        }
+        for (Map.Entry<String, Object> entry : rawOptions.entrySet()) {
+            if (entry.getValue() != null && isTableOption(entry.getKey())) {
+                options.put(entry.getKey(), String.valueOf(entry.getValue()));
+            }
+        }
+        return options;
+    }
+    
+    private static boolean isTableOption(String key) {
+        return StringUtils.isNotBlank(key)
+                && !NON_TABLE_OPTION_KEYS.contains(key)
+                && !key.startsWith("hadoop.")
+                && !key.startsWith("fs.")
+                && !key.startsWith("s3.");
     }
     
     private static String[] splitKeys(String keys) {

@@ -7,15 +7,19 @@
     "endpoint": "http://127.0.0.1:9000",
     "region": "us-east-1",
     "pathStyleAccess": true,
-    "sslEnabled": false
+    "sslEnabled": false,
+    "full-compaction.delta-commits": "1",
+    "file.format": "parquet",
+    "bucket": "1",
+    "bucket-key": "name",
+    "snapshot.num-retained.min": "5"
   },
   "table": "peopletest",
   "loadMode": "APPEND",
-  "write": {
-    "batchSize": 1000,
-    "overwritePartition": {
-      "enabled": false,
-      "partition": {}
+  "batchSize": 1000,
+  "overwritePartition": {
+    "enabled": false,
+    "partition": {
     }
   },
   "primaryKey": "",
@@ -29,13 +33,5 @@
       "name": "age",
       "type": "int"
     }
-  ],
-  "sink": {
-    "options": {
-      "full-compaction.delta-commits": "1",
-      "file.format": "parquet",
-      "bucket": "1",
-      "snapshot.num-retained.min": "5"
-    }
-  }
+  ]
 }

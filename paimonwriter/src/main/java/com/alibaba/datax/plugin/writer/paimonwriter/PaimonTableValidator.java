@@ -74,12 +74,12 @@ final class PaimonTableValidator {
         }
         for (String partitionKey : partitionKeys) {
             if (!overwritePartition.containsKey(partitionKey)) {
-                throw DataXException.asDataXException("write.overwritePartition.partition缺少分区字段: " + partitionKey);
+                throw DataXException.asDataXException("overwritePartition.partition缺少分区字段: " + partitionKey);
             }
         }
         for (String partitionKey : overwritePartition.keySet()) {
             if (!partitionKeys.contains(partitionKey)) {
-                throw DataXException.asDataXException("write.overwritePartition.partition包含非表分区字段: " + partitionKey);
+                throw DataXException.asDataXException("overwritePartition.partition包含非表分区字段: " + partitionKey);
             }
         }
     }

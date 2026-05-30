@@ -14,15 +14,17 @@
             "secretKeyRef": "",
             "pathStyleAccess": true,
             "sslEnabled": false,
-            "hadoop.fs.s3a.connection.maximum": "100"
+            "hadoop.fs.s3a.connection.maximum": "100",
+            "bucket": "1",
+            "bucket-key": "",
+            "file.format": "parquet"
         },
         "table": "",
         "loadMode": "APPEND",
-        "write": {
-            "batchSize": 1000,
-            "overwritePartition": {
-                "enabled": false,
-                "partition": {}
+        "batchSize": 1000,
+        "overwritePartition": {
+            "enabled": false,
+            "partition": {
             }
         },
         "primaryKey": "",
@@ -32,12 +34,6 @@
                 "name": "",
                 "type": "varchar"
             }
-        ],
-        "sink": {
-            "options": {
-                "bucket": "1",
-                "file.format": "parquet"
-            }
-        }
+        ]
     }
 }
