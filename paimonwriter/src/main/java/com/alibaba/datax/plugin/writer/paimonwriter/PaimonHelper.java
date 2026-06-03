@@ -112,37 +112,7 @@ public class PaimonHelper {
      * @param catalog Paimon Catalog
      */
     static void createPaimonTable(Catalog catalog, Configuration originalConfig) {
-        Map<String, String> options = tableOptions(originalConfig);
-        
-        Schema.Builder schemaBuilder = Schema.newBuilder();
-        //建表主键
-        if (StringUtils.isNotBlank(originalConfig.getString(ConfigKey.PRIMARY_KEY))) {
-            schemaBuilder.primaryKey(splitKeys(originalConfig.getString(ConfigKey.PRIMARY_KEY)));
-        }
-        //建表分区
-        if (StringUtils.isNotBlank(originalConfig.getString(ConfigKey.PARTITION_KEY))) {
-            schemaBuilder.partitionKeys(splitKeys(originalConfig.getString(ConfigKey.PARTITION_KEY)));
-            options.put(CoreOptions.METASTORE_PARTITIONED_TABLE.key(), "true");
-        }
-        //建表字段
-        List<Configuration> columns = originalConfig.getListConfiguration(ConfigKey.COLUMN);
-        Validate.notEmpty(columns, "column can't be empty");
-        columns.forEach(column -> {
-            String name = column.getString("name");
-            Validate.notBlank(name, "column.name can't be blank");
-            
-            String type = column.getString("type");
-            Validate.notBlank(type, "column.type can't be blank");
-            
-            DataType dataType = StarRocksTypeParser.parse(type);
-            schemaBuilder.column(name, dataType);
-        });
-        
-        //表配置参数
-        if (!options.isEmpty()) {
-            schemaBuilder.options(options);
-        }
-        Schema schema = schemaBuilder.build();
+        Schema schema = buildSchema(originalConfig);
         String databaseName = PaimonConfigUtil.database(originalConfig);
         String tableName = originalConfig.getString(ConfigKey.TABLE);
         Identifier identifier = Identifier.create(databaseName, tableName);
@@ -168,6 +138,49 @@ public class PaimonHelper {
             throw DataXException.asDataXException(
                     String.format("database不存在: '%s'", databaseName));
         }
+    }
+    
+    static Schema buildSchema(Configuration originalConfig) {
+        Map<String, String> options = tableOptions(originalConfig);
+        
+        Schema.Builder schemaBuilder = Schema.newBuilder();
+        String tableComment = StringUtils.trimToNull(originalConfig.getString(ConfigKey.TABLE_COMMENT));
+        if (tableComment != null) {
+            schemaBuilder.comment(tableComment);
+        }
+        //建表主键
+        if (StringUtils.isNotBlank(originalConfig.getString(ConfigKey.PRIMARY_KEY))) {
+            schemaBuilder.primaryKey(splitKeys(originalConfig.getString(ConfigKey.PRIMARY_KEY)));
+        }
+        //建表分区
+        if (StringUtils.isNotBlank(originalConfig.getString(ConfigKey.PARTITION_KEY))) {
+            schemaBuilder.partitionKeys(splitKeys(originalConfig.getString(ConfigKey.PARTITION_KEY)));
+            options.put(CoreOptions.METASTORE_PARTITIONED_TABLE.key(), "true");
+        }
+        //建表字段
+        List<Configuration> columns = originalConfig.getListConfiguration(ConfigKey.COLUMN);
+        Validate.notEmpty(columns, "column can't be empty");
+        columns.forEach(column -> {
+            String name = StringUtils.trimToNull(column.getString("name"));
+            Validate.notBlank(name, "column.name can't be blank");
+            
+            String type = StringUtils.trimToNull(column.getString("type"));
+            Validate.notBlank(type, "column.type can't be blank");
+            
+            DataType dataType = StarRocksTypeParser.parse(type);
+            String comment = StringUtils.trimToNull(column.getString(ConfigKey.COMMENT));
+            if (comment == null) {
+                schemaBuilder.column(name, dataType);
+            } else {
+                schemaBuilder.column(name, dataType, comment);
+            }
+        });
+        
+        //表配置参数
+        if (!options.isEmpty()) {
+            schemaBuilder.options(options);
+        }
+        return schemaBuilder.build();
     }
     
     private static Map<String, String> tableOptions(Configuration originalConfig) {

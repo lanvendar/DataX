@@ -37,11 +37,15 @@ public class ConfigKey {
     
     public static final String TABLE = "table";
     
+    public static final String TABLE_COMMENT = "tableComment";
+    
     public static final String PRIMARY_KEY = "primaryKey";
     
     public static final String PARTITION_KEY = "partitionKey";
     
     public static final String COLUMN = "column";
+    
+    public static final String COMMENT = "comment";
     
     public static final String LOAD_MODE = "loadMode";
 }

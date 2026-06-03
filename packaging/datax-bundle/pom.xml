@@ -72,16 +72,6 @@
         </dependency>
         <dependency>
             <groupId>com.alibaba.datax</groupId>
-            <artifactId>cassandrareader</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.datax</groupId>
-            <artifactId>cassandrawriter</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.datax</groupId>
             <artifactId>hdfsreader</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -139,6 +129,12 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
             <version>${hadoop.version}</version>
+        </dependency>
+        <!-- [dataX源码修改] S3A 写对象依赖 -->
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>javax.activation-api</artifactId>
+            <version>1.2.0</version>
         </dependency>
         <dependency>
             <groupId>com.alibaba.datax</groupId>
@@ -227,17 +223,6 @@
                 <exclusion>
                     <groupId>org.apache.parquet</groupId>
                     <artifactId>parquet-column</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
-            <version>3.7.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -346,8 +331,6 @@
                                     <include>com.alibaba.datax:rdbmsreader</include>
                                     <include>com.alibaba.datax:rdbmswriter</include>
                                     <!-- reader 和 writer -->
-                                    <include>com.alibaba.datax:cassandrareader</include>
-                                    <include>com.alibaba.datax:cassandrawriter</include>
                                     <include>com.alibaba.datax:hdfsreader</include>
                                     <include>com.alibaba.datax:hdfswriter</include>
                                     <include>com.alibaba.datax:kingbaseesreader</include>
@@ -434,6 +417,7 @@
                                     <include>org.codehaus.jettison:jettison</include>
                                     <include>com.sun.xml.bind:jaxb-impl</include>
                                     <include>javax.xml.bind:jaxb-api</include>
+                                    <include>javax.activation:javax.activation-api</include>
                                     <include>joda-time:joda-time</include>
                                     <include>com.sun.jersey:jersey-core</include>
                                     <include>javax.ws.rs:jsr311-api</include>
@@ -581,7 +565,6 @@
                                     <include>com.microsoft.sqlserver:sqljdbc4</include>
                                     <include>com.oracle.database.jdbc:ojdbc8</include>
                                     <include>org.postgresql:postgresql</include>
-                                    <include>com.datastax.cassandra:cassandra-driver-core</include>
                                     <include>io.netty:netty-handler</include>
                                     <include>io.netty:netty-buffer</include>
                                     <include>io.netty:netty-common</include>
@@ -654,15 +637,6 @@
                                 <copy file="../../../core/src/main/job/job.json"
                                       tofile="${project.build.directory}/datax/tmp/test_job.json"/>
                                 <!-- 生成插件配置文件 -->
-                                <!-- cassandra -->
-                                <copy file="../../../cassandrareader/src/main/resources/plugin.json"
-                                      tofile="${project.build.directory}/datax/plugin/reader/cassandrareader/plugin.json"/>
-                                <copy file="../../../cassandrareader/src/main/resources/plugin_job_template.json"
-                                      tofile="${project.build.directory}/datax/plugin/reader/cassandrareader/plugin_job_template.json"/>
-                                <copy file="../../../cassandrawriter/src/main/resources/plugin.json"
-                                      tofile="${project.build.directory}/datax/plugin/writer/cassandrawriter/plugin.json"/>
-                                <copy file="../../../cassandrawriter/src/main/resources/plugin_job_template.json"
-                                      tofile="${project.build.directory}/datax/plugin/writer/cassandrawriter/plugin_job_template.json"/>
                                 <!-- hdfs -->
                                 <copy file="../../../hdfsreader/src/main/resources/plugin.json"
                                       tofile="${project.build.directory}/datax/plugin/reader/hdfsreader/plugin.json"/>

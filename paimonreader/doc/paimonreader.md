@@ -78,7 +78,11 @@ select name, age from test_person where name = 'alice'
 select name from test_person where dt = '20260530' and age between 18 and 60
 select name from test_person where name in ('alice', 'bob')
 select name from test_person where deleted is null
+select name from test_person where dt = '2026-05-30'
+select name from test_person where created_at = '2026-05-30 12:13:14'
 ```
+
+`where` 条件值会按 Paimon 目标字段类型转换。`DATE` 字段建议使用 `yyyy-MM-dd`，`TIMESTAMP` 字段建议使用 `yyyy-MM-dd HH:mm:ss` 或 `yyyy-MM-dd'T'HH:mm:ss`。
 
 不支持示例：
 

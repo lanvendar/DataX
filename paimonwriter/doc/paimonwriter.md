@@ -9,6 +9,7 @@ PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力�
 * `connectType` 当前固定为 `S3`。
 * `loadMode` 支持 `APPEND`、`UPSERT`、`OVERWRITE_PARTITION`。
 * 表不存在时支持自动创建 database/table。
+* 自动建表时支持可选的中文表注释和中文字段注释。
 * `APPEND` 要求 Paimon 表无主键。
 * `UPSERT` 要求 Paimon 表存在主键。
 * `OVERWRITE_PARTITION` 要求 Paimon 表是分区表，并且必须显式配置覆盖分区。
@@ -47,6 +48,7 @@ PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力�
       "snapshot.num-retained.min": "5"
     },
     "table": "test_person",
+    "tableComment": "测试人员表",
     "loadMode": "APPEND",
     "batchSize": 1000,
     "overwritePartition": {
@@ -59,15 +61,18 @@ PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力�
     "column": [
       {
         "name": "name",
-        "type": "varchar"
+        "type": "varchar",
+        "comment": "姓名"
       },
       {
         "name": "age",
-        "type": "int"
+        "type": "int",
+        "comment": "年龄"
       },
       {
         "name": "tags",
-        "type": "array<varchar>"
+        "type": "array<varchar>",
+        "comment": "标签列表"
       }
     ]
   }
@@ -147,12 +152,13 @@ PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力�
 | `options.pathStyleAccess` | 是否启用 path-style access。Ceph 场景通常需要开启。 | 可选 | `true` |
 | `options.sslEnabled` | 是否启用 SSL。 | 可选 | `false` |
 | `table` | Paimon table。 | 必须 | 无 |
+| `tableComment` | 自动建表时使用的表注释，支持中文；未配置或为空时不写入表注释。 | 可选 | 无 |
 | `loadMode` | 写入模式：`APPEND`、`UPSERT`、`OVERWRITE_PARTITION`。 | 必须 | `APPEND` |
 | `batchSize` | 每批 commit 的记录数。`OVERWRITE_PARTITION` 模式不按该值多次 commit。 | 可选 | `1000` |
 | `overwritePartition` | 覆盖分区配置。 | 可选 | `{"enabled":false}` |
 | `primaryKey` | 自动建表时使用的主键，多个字段用逗号分隔。 | 可选 | 无 |
 | `partitionKey` | 自动建表时使用的分区键，多个字段用逗号分隔。 | 可选 | 无 |
-| `column` | 写入字段和 StarRocks 类型，字段顺序必须与上游 Record 一致。 | 必须 | 无 |
+| `column` | 写入字段和 StarRocks 类型，字段顺序必须与上游 Record 一致；自动建表时可通过 `column[].comment` 写入字段注释，支持中文。 | 必须 | 无 |
 
 ## 5 可扩展参数规则
 
@@ -160,7 +166,7 @@ PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力�
 
 固定字段必须按语义校验。除固定字段外，`options` 允许继续携带 Paimon 官方原生参数、Hadoop/S3A 协议透传参数或 Paimon 建表属性，未知字段不会被执行器直接拒绝，会按 KV 形式透传。
 
-当固定字段与动态 KV 同名时，以固定字段为准。`batchSize`、`overwritePartition`、`loadMode`、`primaryKey`、`partitionKey`、`column` 等 DataX 自定义控制项必须放在 `parameter` 下，不放入 `options`。
+当固定字段与动态 KV 同名时，以固定字段为准。`batchSize`、`overwritePartition`、`loadMode`、`primaryKey`、`partitionKey`、`tableComment`、`column` 等 DataX 自定义控制项必须放在 `parameter` 下，不放入 `options`。
 
 自动建表时，`options` 中非连接类、非 Hadoop/S3A 协议类的 KV 会作为 Paimon table options 写入表属性，例如 `bucket`、`bucket-key`、`file.format`、`snapshot.num-retained.min`、`merge-engine`。
 

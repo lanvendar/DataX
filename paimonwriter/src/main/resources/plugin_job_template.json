@@ -20,6 +20,7 @@
             "file.format": "parquet"
         },
         "table": "",
+        "tableComment": "",
         "loadMode": "APPEND",
         "batchSize": 1000,
         "overwritePartition": {
@@ -32,7 +33,8 @@
         "column": [
             {
                 "name": "",
-                "type": "varchar"
+                "type": "varchar",
+                "comment": ""
             }
         ]
     }

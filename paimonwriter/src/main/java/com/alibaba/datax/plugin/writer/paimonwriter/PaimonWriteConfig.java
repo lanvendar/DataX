@@ -49,7 +49,7 @@ final class PaimonWriteConfig {
             if (!columnNames.add(normalizedName)) {
                 throw DataXException.asDataXException("column.name重复: " + normalizedName);
             }
-            columns.add(new PaimonColumn(normalizedName, type.trim()));
+            columns.add(new PaimonColumn(normalizedName, type.trim(), trimToNull(column.getString(ConfigKey.COMMENT))));
         }
         
         LoadMode loadMode = LoadMode.from(taskConfig.getString(ConfigKey.LOAD_MODE, LoadMode.APPEND.name()));
@@ -106,5 +106,12 @@ final class PaimonWriteConfig {
     
     private static boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+    
+    private static String trimToNull(String value) {
+        if (isBlank(value)) {
+            return null;
+        }
+        return value.trim();
     }
 }
