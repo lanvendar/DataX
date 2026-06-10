@@ -45,7 +45,7 @@ final class PaimonBatchWriter {
     }
     
     void finish() throws Exception {
-        if (hasRecord && batchRecordCount > 0) {
+        if ((hasRecord && batchRecordCount > 0) || writeConfig.getLoadMode().isOverwrite()) {
             commitCurrentBatch();
             write = null;
         }
@@ -56,7 +56,7 @@ final class PaimonBatchWriter {
     }
     
     private boolean shouldFlush() {
-        return writeConfig.getLoadMode() != LoadMode.OVERWRITE_PARTITION
+        return !writeConfig.getLoadMode().isOverwrite()
                 && batchRecordCount >= writeConfig.getBatchSize();
     }
     
@@ -64,16 +64,20 @@ final class PaimonBatchWriter {
         writeBuilder = table.newBatchWriteBuilder();
         if (writeConfig.getLoadMode() == LoadMode.OVERWRITE_PARTITION) {
             writeBuilder = writeBuilder.withOverwrite(writeConfig.getOverwritePartition());
+        } else if (writeConfig.getLoadMode() == LoadMode.OVERWRITE_TABLE) {
+            writeBuilder = writeBuilder.withOverwrite();
         }
         write = writeBuilder.newWrite();
         batchRecordCount = 0;
     }
     
     private void commitCurrentBatch() throws Exception {
-        try {
-            write.compact(BinaryRow.EMPTY_ROW, 0, true);
-        } catch (Exception e) {
-            LOG.warn("compact paimon表失败，继续提交当前批次", e);
+        if (batchRecordCount > 0) {
+            try {
+                write.compact(BinaryRow.EMPTY_ROW, 0, true);
+            } catch (Exception e) {
+                LOG.warn("compact paimon表失败，继续提交当前批次", e);
+            }
         }
         
         List<CommitMessage> messages = null;

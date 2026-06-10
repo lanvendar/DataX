@@ -7,13 +7,19 @@ import java.util.Locale;
 enum LoadMode {
     APPEND,
     UPSERT,
-    OVERWRITE_PARTITION;
+    OVERWRITE_PARTITION,
+    OVERWRITE_TABLE;
     
     static LoadMode from(String value) {
         try {
             return LoadMode.valueOf(value.toUpperCase(Locale.ROOT));
         } catch (Exception e) {
-            throw DataXException.asDataXException("loadMode仅支持APPEND、UPSERT、OVERWRITE_PARTITION");
+            throw DataXException.asDataXException(
+                    "loadMode仅支持APPEND、UPSERT、OVERWRITE_PARTITION、OVERWRITE_TABLE");
         }
+    }
+    
+    boolean isOverwrite() {
+        return this == OVERWRITE_PARTITION || this == OVERWRITE_TABLE;
     }
 }

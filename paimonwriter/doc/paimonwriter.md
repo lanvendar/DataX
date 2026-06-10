@@ -2,17 +2,18 @@
 
 ## 1 快速介绍
 
-PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力，支持追加、主键 upsert、分区覆盖写入。
+PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力，支持追加、主键 upsert、分区覆盖和全表覆盖写入。
 
 ## 2 功能与限制
 
 * `connectType` 当前固定为 `S3`。
-* `loadMode` 支持 `APPEND`、`UPSERT`、`OVERWRITE_PARTITION`。
+* `loadMode` 支持 `APPEND`、`UPSERT`、`OVERWRITE_PARTITION`、`OVERWRITE_TABLE`。
 * 表不存在时支持自动创建 database/table。
 * 自动建表时支持可选的中文表注释和中文字段注释。
 * `APPEND` 要求 Paimon 表无主键。
 * `UPSERT` 要求 Paimon 表存在主键。
 * `OVERWRITE_PARTITION` 要求 Paimon 表是分区表，并且必须显式配置覆盖分区。
+* `OVERWRITE_TABLE` 使用 Paimon `INSERT OVERWRITE` 语义覆盖整张表，任务结束时单次 commit，不按 `batchSize` 多次 commit。
 * 上游 Record 列数必须与 `column` 配置数量一致。
 * `column` 支持配置 Paimon 表字段子集，字段名按 Paimon 表字段名映射，顺序按上游 Record 顺序读取。
 * 部分列写入必须包含主键字段；分区字段可以由 `column` 提供，也可以在 `OVERWRITE_PARTITION` 模式下由 `overwritePartition.partition` 提供。
@@ -135,6 +136,27 @@ PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力�
 
 上例中 `dt` 分区字段未出现在 `column` 中，执行器会使用 `overwritePartition.partition.dt` 作为写入行的分区值。
 
+### 3.4 OVERWRITE_TABLE
+
+`OVERWRITE_TABLE` 用于全表覆盖写入。该模式不需要配置 `overwritePartition`，为了保证覆盖原子性，会在任务结束时单次 commit，不按 `batchSize` 多次 commit。
+
+```json
+{
+  "loadMode": "OVERWRITE_TABLE",
+  "batchSize": 1000,
+  "column": [
+    {
+      "name": "name",
+      "type": "varchar"
+    },
+    {
+      "name": "age",
+      "type": "int"
+    }
+  ]
+}
+```
+
 ## 4 参数说明
 
 | 字段 | 说明 | 是否必须 | 默认值 |
@@ -153,8 +175,8 @@ PaimonWriter 提供向 S3/Ceph 上 Apache Paimon 表批量写入数据的能力�
 | `options.sslEnabled` | 是否启用 SSL。 | 可选 | `false` |
 | `table` | Paimon table。 | 必须 | 无 |
 | `tableComment` | 自动建表时使用的表注释，支持中文；未配置或为空时不写入表注释。 | 可选 | 无 |
-| `loadMode` | 写入模式：`APPEND`、`UPSERT`、`OVERWRITE_PARTITION`。 | 必须 | `APPEND` |
-| `batchSize` | 每批 commit 的记录数。`OVERWRITE_PARTITION` 模式不按该值多次 commit。 | 可选 | `1000` |
+| `loadMode` | 写入模式：`APPEND`、`UPSERT`、`OVERWRITE_PARTITION`、`OVERWRITE_TABLE`。 | 必须 | `APPEND` |
+| `batchSize` | 每批 commit 的记录数。`OVERWRITE_PARTITION`、`OVERWRITE_TABLE` 模式不按该值多次 commit。 | 可选 | `1000` |
 | `overwritePartition` | 覆盖分区配置。 | 可选 | `{"enabled":false}` |
 | `primaryKey` | 自动建表时使用的主键，多个字段用逗号分隔。 | 可选 | 无 |
 | `partitionKey` | 自动建表时使用的分区键，多个字段用逗号分隔。 | 可选 | 无 |
@@ -179,8 +201,9 @@ S3/Ceph 连接会自动设置常用 S3A 参数，包括 endpoint、region、acce
 | `APPEND` | 追加写入。 | 无主键表 | `INSERT` | 按 `batchSize` 分批 commit |
 | `UPSERT` | 主键合并写入。 | 主键表 | `UPDATE_AFTER` | 按 `batchSize` 分批 commit |
 | `OVERWRITE_PARTITION` | 覆盖指定分区。 | 分区表 | `INSERT` | 任务结束时单次 commit |
+| `OVERWRITE_TABLE` | 覆盖整张表。 | 无特殊要求 | `INSERT` | 任务结束时单次 commit |
 
-不提供 `TRUNCATE`/全表覆盖模式。全表清空风险较高，建议用 `OVERWRITE_PARTITION` 做有边界的覆盖；如确实需要全表重载，应由外部流程显式清表后再写入。
+`OVERWRITE_TABLE` 是全表覆盖能力，风险边界比 `OVERWRITE_PARTITION` 更大，建议只在明确需要整表重载的任务中使用。该模式会调用 Paimon batch `withOverwrite()`，等价于 SQL `INSERT OVERWRITE` 的全表覆盖语义。
 
 ## 7 类型转换
 
