@@ -50,17 +50,33 @@ final class PaimonRecordConverter {
     
     private final Map<String, String> defaultValues;
     
+    private final ProxyPrimaryKeyConfig proxyPrimaryKeyConfig;
+    
+    private int proxyPrimaryKeyFieldIndex = -1;
+    
+    private DataType proxyPrimaryKeyFieldType;
+    
+    private int[] proxyPrimaryKeySourceIndexes = new int[0];
+    
     PaimonRecordConverter(List<PaimonColumn> columns, RowType rowType, RowKind rowKind) {
         this(columns, rowType, rowKind, null);
     }
     
     PaimonRecordConverter(List<PaimonColumn> columns, RowType rowType, RowKind rowKind, Map<String, String> defaultValues) {
+        this(columns, rowType, rowKind, defaultValues, null);
+    }
+    
+    PaimonRecordConverter(List<PaimonColumn> columns, RowType rowType, RowKind rowKind,
+                          Map<String, String> defaultValues, ProxyPrimaryKeyConfig proxyPrimaryKeyConfig) {
         this.columns = columns;
         this.rowType = rowType;
         this.fieldIndexes = new int[columns.size()];
         this.fieldTypes = new DataType[columns.size()];
         this.rowKind = rowKind;
         this.defaultValues = defaultValues;
+        this.proxyPrimaryKeyConfig = proxyPrimaryKeyConfig == null
+                ? new ProxyPrimaryKeyConfig(PrimaryKeyMode.FIELDS, ProxyPrimaryKeyAlgorithm.UUID, null)
+                : proxyPrimaryKeyConfig;
         validateAndBuildMapping();
     }
     
@@ -77,6 +93,7 @@ final class PaimonRecordConverter {
             Column column = record.getColumn(i);
             writeRecord.setField(fieldIndexes[i], parseValue(column, fieldTypes[i]));
         }
+        fillProxyPrimaryKey(record, writeRecord);
         return writeRecord;
     }
     
@@ -116,6 +133,57 @@ final class PaimonRecordConverter {
             fieldIndexes[i] = tableIndex;
             fieldTypes[i] = tableType;
         }
+        validateAndBuildProxyPrimaryKeyMapping(tableFieldIndexes);
+    }
+    
+    private void validateAndBuildProxyPrimaryKeyMapping(Map<String, Integer> tableFieldIndexes) {
+        if (!proxyPrimaryKeyConfig.isProxy()) {
+            return;
+        }
+        
+        Integer tableIndex = tableFieldIndexes.get(ProxyPrimaryKeyConfig.PROXY_PRIMARY_KEY_NAME);
+        if (tableIndex == null) {
+            throw DataXException.asDataXException("primaryKeyMode=PROXY要求Paimon表存在代理主键字段_id_");
+        }
+        DataType tableType = rowType.getTypeAt(tableIndex);
+        if (!isStringType(tableType.getTypeRoot())) {
+            throw DataXException.asDataXException("primaryKeyMode=PROXY要求Paimon表代理主键字段_id_为字符串类型");
+        }
+        proxyPrimaryKeyFieldIndex = tableIndex;
+        proxyPrimaryKeyFieldType = tableType;
+        
+        Map<String, Integer> configuredColumnIndexes = new HashMap<>();
+        for (int i = 0; i < columns.size(); i++) {
+            configuredColumnIndexes.put(columns.get(i).getName(), i);
+        }
+        List<String> sourceFields = proxyPrimaryKeyConfig.getSourceFields();
+        proxyPrimaryKeySourceIndexes = new int[sourceFields.size()];
+        for (int i = 0; i < sourceFields.size(); i++) {
+            Integer sourceIndex = configuredColumnIndexes.get(sourceFields.get(i));
+            if (sourceIndex == null) {
+                throw DataXException.asDataXException(
+                        "primaryKeyMode=PROXY时primaryKey源字段必须存在于column配置: " + sourceFields.get(i));
+            }
+            proxyPrimaryKeySourceIndexes[i] = sourceIndex;
+        }
+    }
+    
+    private void fillProxyPrimaryKey(Record record, GenericRow writeRecord) {
+        if (!proxyPrimaryKeyConfig.isProxy()) {
+            return;
+        }
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < proxyPrimaryKeySourceIndexes.length; i++) {
+            if (i > 0) {
+                builder.append('_');
+            }
+            Column column = record.getColumn(proxyPrimaryKeySourceIndexes[i]);
+            if (column != null && column.getRawData() != null) {
+                builder.append(column.asString());
+            }
+        }
+        String proxyValue = ProxyPrimaryKeyGenerator.generate(builder.toString(), proxyPrimaryKeyConfig.getAlgorithm());
+        writeRecord.setField(proxyPrimaryKeyFieldIndex, convertValue(proxyValue, null, proxyPrimaryKeyFieldType));
     }
     
     private static boolean isCompatibleType(DataType declaredType, DataType tableType) {

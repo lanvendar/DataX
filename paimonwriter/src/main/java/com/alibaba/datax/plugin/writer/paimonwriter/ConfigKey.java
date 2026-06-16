@@ -41,6 +41,10 @@ public class ConfigKey {
     
     public static final String PRIMARY_KEY = "primaryKey";
     
+    public static final String PRIMARY_KEY_MODE = "primaryKeyMode";
+    
+    public static final String PRIMARY_KEY_ALGORITHM = "primaryKeyAlgorithm";
+    
     public static final String PARTITION_KEY = "partitionKey";
     
     public static final String COLUMN = "column";

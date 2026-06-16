@@ -82,4 +82,35 @@ public class PaimonRecordConverterTest {
         Assert.assertEquals(7, row.getInt(0));
         Assert.assertEquals("bob", row.getString(1).toString());
     }
+    
+    @Test
+    public void testProxyPrimaryKeyUsesEmptyStringAndConfiguredAlgorithm() {
+        RowType rowType = RowType.of(
+                new org.apache.paimon.types.DataType[]{
+                        DataTypes.STRING(),
+                        DataTypes.STRING(),
+                        DataTypes.INT()
+                },
+                new String[]{"_id_", "name", "age"});
+        List<PaimonColumn> columns = Arrays.asList(
+                new PaimonColumn("name", "string"),
+                new PaimonColumn("age", "int"));
+        ProxyPrimaryKeyConfig proxyConfig = new ProxyPrimaryKeyConfig(
+                PrimaryKeyMode.PROXY,
+                ProxyPrimaryKeyAlgorithm.SHA_256,
+                Arrays.asList("name", "age"));
+        PaimonRecordConverter converter = new PaimonRecordConverter(
+                columns, rowType, RowKind.UPDATE_AFTER, null, proxyConfig);
+        
+        DefaultRecord record = new DefaultRecord();
+        record.setColumn(0, new StringColumn(""));
+        record.setColumn(1, new LongColumn(18));
+        
+        GenericRow row = converter.convert(record);
+        Assert.assertEquals(
+                ProxyPrimaryKeyGenerator.generate("_18", ProxyPrimaryKeyAlgorithm.SHA_256),
+                row.getString(0).toString());
+        Assert.assertEquals("", row.getString(1).toString());
+        Assert.assertEquals(18, row.getInt(2));
+    }
 }

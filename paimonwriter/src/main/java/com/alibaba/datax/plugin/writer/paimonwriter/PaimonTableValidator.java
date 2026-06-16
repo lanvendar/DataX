@@ -33,6 +33,10 @@ final class PaimonTableValidator {
         if (loadMode == LoadMode.OVERWRITE_PARTITION) {
             validateOverwritePartition(table.partitionKeys(), writeConfig.getOverwritePartition());
         }
+        if (writeConfig.getProxyPrimaryKeyConfig().isProxy()
+                && !table.primaryKeys().contains(ProxyPrimaryKeyConfig.PROXY_PRIMARY_KEY_NAME)) {
+            throw DataXException.asDataXException("primaryKeyMode=PROXY要求Paimon表真实主键包含_id_");
+        }
     }
     
     private static void validateRequiredColumns(Table table, PaimonWriteConfig writeConfig) {
@@ -42,6 +46,10 @@ final class PaimonTableValidator {
         }
         
         for (String primaryKey : table.primaryKeys()) {
+            if (writeConfig.getProxyPrimaryKeyConfig().isProxy()
+                    && ProxyPrimaryKeyConfig.PROXY_PRIMARY_KEY_NAME.equals(primaryKey)) {
+                continue;
+            }
             if (!configuredColumns.contains(primaryKey)) {
                 throw DataXException.asDataXException("部分列写入必须包含主键字段: " + primaryKey);
             }
@@ -58,6 +66,8 @@ final class PaimonTableValidator {
             String fieldName = rowType.getFieldNames().get(i);
             if (!rowType.getTypeAt(i).isNullable()
                     && !configuredColumns.contains(fieldName)
+                    && !(writeConfig.getProxyPrimaryKeyConfig().isProxy()
+                    && ProxyPrimaryKeyConfig.PROXY_PRIMARY_KEY_NAME.equals(fieldName))
                     && !hasOverwritePartitionValue(writeConfig, fieldName)) {
                 throw DataXException.asDataXException("部分列写入不能缺失非空字段: " + fieldName);
             }

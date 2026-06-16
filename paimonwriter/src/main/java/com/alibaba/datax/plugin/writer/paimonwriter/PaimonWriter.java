@@ -134,7 +134,8 @@ public class PaimonWriter extends Writer {
                 table = PaimonHelper.getPaimonTable(taskConfig);
                 PaimonTableValidator.validate(table, writeConfig);
                 recordConverter = new PaimonRecordConverter(
-                        writeConfig.getColumns(), table.rowType(), rowKind(), writeConfig.getOverwritePartition());
+                        writeConfig.getColumns(), table.rowType(), rowKind(),
+                        writeConfig.getOverwritePartition(), writeConfig.getProxyPrimaryKeyConfig());
             } catch (Exception e) {
                 LOG.error("获取Paimon表失败", e);
                 throw e;

@@ -29,4 +29,36 @@ public class PaimonWriteConfigTest {
             Assert.assertTrue(e.getMessage().contains("OVERWRITE_TABLE"));
         }
     }
+    
+    @Test
+    public void testPrimaryKeyModeDefaultsToFields() {
+        Configuration configuration = Configuration.from("{"
+                + "\"column\":[{\"name\":\"name\",\"type\":\"varchar\"}]"
+                + "}");
+        
+        PaimonWriteConfig writeConfig = PaimonWriteConfig.from(configuration);
+        
+        Assert.assertEquals(PrimaryKeyMode.FIELDS, writeConfig.getProxyPrimaryKeyConfig().getMode());
+        Assert.assertFalse(writeConfig.getProxyPrimaryKeyConfig().isProxy());
+    }
+    
+    @Test
+    public void testProxyPrimaryKeyConfig() {
+        Configuration configuration = Configuration.from("{"
+                + "\"primaryKeyMode\":\"PROXY\","
+                + "\"primaryKeyAlgorithm\":\"SHA-256\","
+                + "\"loadMode\":\"UPSERT\","
+                + "\"primaryKey\":\"name,age\","
+                + "\"column\":["
+                + "{\"name\":\"name\",\"type\":\"varchar\"},"
+                + "{\"name\":\"age\",\"type\":\"int\"}"
+                + "]"
+                + "}");
+        
+        PaimonWriteConfig writeConfig = PaimonWriteConfig.from(configuration);
+        
+        Assert.assertTrue(writeConfig.getProxyPrimaryKeyConfig().isProxy());
+        Assert.assertEquals(ProxyPrimaryKeyAlgorithm.SHA_256, writeConfig.getProxyPrimaryKeyConfig().getAlgorithm());
+        Assert.assertEquals(2, writeConfig.getProxyPrimaryKeyConfig().getSourceFields().size());
+    }
 }

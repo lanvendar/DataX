@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -141,6 +142,7 @@ public class PaimonHelper {
     }
     
     static Schema buildSchema(Configuration originalConfig) {
+        PaimonWriteConfig writeConfig = PaimonWriteConfig.from(originalConfig);
         Map<String, String> options = tableOptions(originalConfig);
         
         Schema.Builder schemaBuilder = Schema.newBuilder();
@@ -149,17 +151,21 @@ public class PaimonHelper {
             schemaBuilder.comment(tableComment);
         }
         //建表主键
-        if (StringUtils.isNotBlank(originalConfig.getString(ConfigKey.PRIMARY_KEY))) {
-            schemaBuilder.primaryKey(splitKeys(originalConfig.getString(ConfigKey.PRIMARY_KEY)));
+        List<String> primaryKeys = primaryKeys(originalConfig, writeConfig);
+        if (!primaryKeys.isEmpty()) {
+            schemaBuilder.primaryKey(primaryKeys);
         }
         //建表分区
         if (StringUtils.isNotBlank(originalConfig.getString(ConfigKey.PARTITION_KEY))) {
-            schemaBuilder.partitionKeys(splitKeys(originalConfig.getString(ConfigKey.PARTITION_KEY)));
+            schemaBuilder.partitionKeys(PaimonWriteConfig.splitKeys(originalConfig.getString(ConfigKey.PARTITION_KEY)));
             options.put(CoreOptions.METASTORE_PARTITIONED_TABLE.key(), "true");
         }
         //建表字段
         List<Configuration> columns = originalConfig.getListConfiguration(ConfigKey.COLUMN);
         Validate.notEmpty(columns, "column can't be empty");
+        if (writeConfig.getProxyPrimaryKeyConfig().isProxy()) {
+            schemaBuilder.column(ProxyPrimaryKeyConfig.PROXY_PRIMARY_KEY_NAME, org.apache.paimon.types.DataTypes.STRING());
+        }
         columns.forEach(column -> {
             String name = StringUtils.trimToNull(column.getString("name"));
             Validate.notBlank(name, "column.name can't be blank");
@@ -205,10 +211,19 @@ public class PaimonHelper {
                 && !key.startsWith("s3.");
     }
     
-    private static String[] splitKeys(String keys) {
-        return java.util.Arrays.stream(keys.split(","))
-                .map(String::trim)
-                .filter(StringUtils::isNotBlank)
-                .toArray(String[]::new);
+    private static List<String> primaryKeys(Configuration originalConfig, PaimonWriteConfig writeConfig) {
+        if (!writeConfig.getProxyPrimaryKeyConfig().isProxy()) {
+            return PaimonWriteConfig.splitKeys(originalConfig.getString(ConfigKey.PRIMARY_KEY));
+        }
+        
+        LinkedHashSet<String> keys = new LinkedHashSet<>();
+        keys.add(ProxyPrimaryKeyConfig.PROXY_PRIMARY_KEY_NAME);
+        keys.addAll(PaimonWriteConfig.splitKeys(originalConfig.getString(ConfigKey.PARTITION_KEY)));
+        
+        Map<String, Object> rawOptions = originalConfig.getMap(ConfigKey.OPTIONS);
+        if (rawOptions != null && rawOptions.get("bucket-key") != null) {
+            keys.addAll(PaimonWriteConfig.splitKeys(String.valueOf(rawOptions.get("bucket-key"))));
+        }
+        return new java.util.ArrayList<>(keys);
     }
 }

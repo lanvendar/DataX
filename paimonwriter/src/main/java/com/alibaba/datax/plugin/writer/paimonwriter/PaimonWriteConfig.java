@@ -4,6 +4,7 @@ import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.common.util.Configuration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,12 +21,15 @@ final class PaimonWriteConfig {
     
     private final Map<String, String> overwritePartition;
     
+    private final ProxyPrimaryKeyConfig proxyPrimaryKeyConfig;
+    
     private PaimonWriteConfig(List<PaimonColumn> columns, LoadMode loadMode, int batchSize,
-                              Map<String, String> overwritePartition) {
+                              Map<String, String> overwritePartition, ProxyPrimaryKeyConfig proxyPrimaryKeyConfig) {
         this.columns = columns;
         this.loadMode = loadMode;
         this.batchSize = batchSize;
         this.overwritePartition = overwritePartition;
+        this.proxyPrimaryKeyConfig = proxyPrimaryKeyConfig;
     }
     
     static PaimonWriteConfig from(Configuration taskConfig) {
@@ -58,7 +62,12 @@ final class PaimonWriteConfig {
             throw DataXException.asDataXException("batchSize必须大于0");
         }
         
-        return new PaimonWriteConfig(columns, loadMode, batchSize, parseOverwritePartition(taskConfig, loadMode));
+        ProxyPrimaryKeyConfig proxyPrimaryKeyConfig = parseProxyPrimaryKeyConfig(taskConfig, columnNames);
+        if (loadMode == LoadMode.APPEND && proxyPrimaryKeyConfig.isProxy()) {
+            throw DataXException.asDataXException("primaryKeyMode=PROXY会生成主键表，loadMode不能为APPEND，请使用UPSERT");
+        }
+        return new PaimonWriteConfig(
+                columns, loadMode, batchSize, parseOverwritePartition(taskConfig, loadMode), proxyPrimaryKeyConfig);
     }
     
     List<PaimonColumn> getColumns() {
@@ -75,6 +84,10 @@ final class PaimonWriteConfig {
     
     Map<String, String> getOverwritePartition() {
         return overwritePartition;
+    }
+    
+    ProxyPrimaryKeyConfig getProxyPrimaryKeyConfig() {
+        return proxyPrimaryKeyConfig;
     }
     
     private static Map<String, String> parseOverwritePartition(Configuration taskConfig, LoadMode mode) {
@@ -113,5 +126,47 @@ final class PaimonWriteConfig {
             return null;
         }
         return value.trim();
+    }
+    
+    private static ProxyPrimaryKeyConfig parseProxyPrimaryKeyConfig(Configuration taskConfig, Set<String> columnNames) {
+        PrimaryKeyMode mode = PrimaryKeyMode.from(taskConfig.getString(ConfigKey.PRIMARY_KEY_MODE));
+        if (mode == PrimaryKeyMode.FIELDS) {
+            return new ProxyPrimaryKeyConfig(mode, ProxyPrimaryKeyAlgorithm.UUID, null);
+        }
+        
+        List<String> sourceFields = splitKeys(taskConfig.getString(ConfigKey.PRIMARY_KEY));
+        if (sourceFields.isEmpty()) {
+            throw DataXException.asDataXException("primaryKeyMode=PROXY时primaryKey不能为空");
+        }
+        for (String sourceField : sourceFields) {
+            if (ProxyPrimaryKeyConfig.PROXY_PRIMARY_KEY_NAME.equals(sourceField)) {
+                throw DataXException.asDataXException("primaryKeyMode=PROXY时primaryKey不能包含代理主键字段_id_");
+            }
+            if (!columnNames.contains(sourceField)) {
+                throw DataXException.asDataXException(
+                        "primaryKeyMode=PROXY时primaryKey源字段必须存在于column配置: " + sourceField);
+            }
+        }
+        if (columnNames.contains(ProxyPrimaryKeyConfig.PROXY_PRIMARY_KEY_NAME)) {
+            throw DataXException.asDataXException("primaryKeyMode=PROXY时column不需要配置代理主键字段_id_");
+        }
+        return new ProxyPrimaryKeyConfig(
+                mode,
+                ProxyPrimaryKeyAlgorithm.from(taskConfig.getString(ConfigKey.PRIMARY_KEY_ALGORITHM)),
+                sourceFields);
+    }
+    
+    static List<String> splitKeys(String keys) {
+        if (isBlank(keys)) {
+            return new ArrayList<>();
+        }
+        List<String> result = new ArrayList<>();
+        for (String key : Arrays.asList(keys.split(","))) {
+            String normalized = trimToNull(key);
+            if (normalized != null) {
+                result.add(normalized);
+            }
+        }
+        return result;
     }
 }
