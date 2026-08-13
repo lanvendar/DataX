@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-final class StarRocksTypeParser {
+final class PaimonTypeParser {
     
     private final String input;
     
@@ -17,7 +17,7 @@ final class StarRocksTypeParser {
     
     private int fieldId;
     
-    private StarRocksTypeParser(String input) {
+    private PaimonTypeParser(String input) {
         this.input = input;
     }
     
@@ -25,11 +25,11 @@ final class StarRocksTypeParser {
         if (type == null || type.trim().isEmpty()) {
             throw DataXException.asDataXException("column.type不能为空");
         }
-        StarRocksTypeParser parser = new StarRocksTypeParser(type.trim());
+        PaimonTypeParser parser = new PaimonTypeParser(type.trim());
         DataType dataType = parser.parseType();
         parser.skipWhitespace();
         if (!parser.isEnd()) {
-            throw DataXException.asDataXException("不支持的StarRocks字段类型: " + type);
+            throw DataXException.asDataXException("不支持的Paimon字段类型: " + type);
         }
         return dataType;
     }
@@ -55,7 +55,7 @@ final class StarRocksTypeParser {
             expect('>');
             return DataTypes.MAP(keyType, valueType);
         }
-        if ("STRUCT".equals(name) || "ROW".equals(name)) {
+        if ("ROW".equals(name)) {
             return parseRowType();
         }
         
@@ -72,7 +72,11 @@ final class StarRocksTypeParser {
             }
             expect(')');
         }
+        validateArguments(name, firstArg, secondArg);
         
+        if ("TIMESTAMP".equals(name)) {
+            return parseTimestampType(firstArg);
+        }
         return parsePrimitiveType(name, firstArg, secondArg);
     }
     
@@ -83,11 +87,7 @@ final class StarRocksTypeParser {
             skipWhitespace();
             String fieldName = readIdentifier();
             if (fieldName.length() == 0) {
-                throw DataXException.asDataXException("STRUCT字段名不能为空: " + input);
-            }
-            skipWhitespace();
-            if (peek(':')) {
-                expect(':');
+                throw DataXException.asDataXException("ROW字段名不能为空: " + input);
             }
             DataType fieldType = parseType();
             fields.add(DataTypes.FIELD(fieldId++, fieldName, fieldType));
@@ -102,7 +102,7 @@ final class StarRocksTypeParser {
     }
     
     private DataType parsePrimitiveType(String name, Integer firstArg, Integer secondArg) {
-        if ("BOOLEAN".equals(name) || "BOOL".equals(name)) {
+        if ("BOOLEAN".equals(name)) {
             return DataTypes.BOOLEAN();
         }
         if ("TINYINT".equals(name)) {
@@ -111,14 +111,11 @@ final class StarRocksTypeParser {
         if ("SMALLINT".equals(name)) {
             return DataTypes.SMALLINT();
         }
-        if ("INT".equals(name) || "INTEGER".equals(name)) {
+        if ("INT".equals(name)) {
             return DataTypes.INT();
         }
         if ("BIGINT".equals(name)) {
             return DataTypes.BIGINT();
-        }
-        if ("LARGEINT".equals(name)) {
-            return DataTypes.DECIMAL(38, 0);
         }
         if ("FLOAT".equals(name)) {
             return DataTypes.FLOAT();
@@ -126,15 +123,11 @@ final class StarRocksTypeParser {
         if ("DOUBLE".equals(name)) {
             return DataTypes.DOUBLE();
         }
-        if ("DECIMAL".equals(name) || "DECIMALV2".equals(name)
-                || "DECIMAL32".equals(name) || "DECIMAL64".equals(name) || "DECIMAL128".equals(name)) {
+        if ("DECIMAL".equals(name)) {
             return DataTypes.DECIMAL(firstArg == null ? 10 : firstArg, secondArg == null ? 0 : secondArg);
         }
         if ("DATE".equals(name)) {
             return DataTypes.DATE();
-        }
-        if ("DATETIME".equals(name) || "TIMESTAMP".equals(name)) {
-            return firstArg == null ? DataTypes.TIMESTAMP() : DataTypes.TIMESTAMP(firstArg);
         }
         if ("TIME".equals(name)) {
             return firstArg == null ? DataTypes.TIME() : DataTypes.TIME(firstArg);
@@ -143,21 +136,62 @@ final class StarRocksTypeParser {
             return DataTypes.CHAR(firstArg == null ? 1 : firstArg);
         }
         if ("VARCHAR".equals(name)) {
-            return firstArg == null ? DataTypes.STRING() : DataTypes.VARCHAR(firstArg);
+            return DataTypes.VARCHAR(firstArg == null ? 1 : firstArg);
         }
-        if ("STRING".equals(name) || "JSON".equals(name)) {
+        if ("STRING".equals(name)) {
             return DataTypes.STRING();
         }
-        if ("BINARY".equals(name) || "BYTEA".equals(name)) {
-            return firstArg == null ? DataTypes.BYTES() : DataTypes.BINARY(firstArg);
+        if ("BINARY".equals(name)) {
+            return DataTypes.BINARY(firstArg == null ? 1 : firstArg);
         }
         if ("VARBINARY".equals(name)) {
-            return firstArg == null ? DataTypes.BYTES() : DataTypes.VARBINARY(firstArg);
+            return DataTypes.VARBINARY(firstArg == null ? 1 : firstArg);
         }
-        if ("BITMAP".equals(name) || "HLL".equals(name) || "PERCENTILE".equals(name)) {
-            throw DataXException.asDataXException("PaimonWriter暂不支持StarRocks特殊类型: " + name);
+        if ("BYTES".equals(name)) {
+            return DataTypes.BYTES();
         }
-        throw DataXException.asDataXException("不支持的StarRocks字段类型: " + name);
+        throw DataXException.asDataXException("不支持的Paimon字段类型: " + name);
+    }
+
+    private void validateArguments(String name, Integer firstArg, Integer secondArg) {
+        if (secondArg != null && !"DECIMAL".equals(name)) {
+            throw DataXException.asDataXException("Paimon字段类型参数数量错误: " + input);
+        }
+        if (firstArg == null || "DECIMAL".equals(name) || "TIME".equals(name)
+                || "TIMESTAMP".equals(name) || "CHAR".equals(name) || "VARCHAR".equals(name)
+                || "BINARY".equals(name) || "VARBINARY".equals(name)) {
+            return;
+        }
+        throw DataXException.asDataXException("Paimon字段类型不接受参数: " + input);
+    }
+
+    private DataType parseTimestampType(Integer precision) {
+        if (!readKeyword("WITH")) {
+            return precision == null ? DataTypes.TIMESTAMP() : DataTypes.TIMESTAMP(precision);
+        }
+        expectKeyword("LOCAL");
+        expectKeyword("TIME");
+        expectKeyword("ZONE");
+        return precision == null
+                ? DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE()
+                : DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(precision);
+    }
+
+    private boolean readKeyword(String expected) {
+        int start = pos;
+        String keyword = readIdentifier();
+        if (expected.equalsIgnoreCase(keyword)) {
+            return true;
+        }
+        pos = start;
+        return false;
+    }
+
+    private void expectKeyword(String expected) {
+        if (!readKeyword(expected)) {
+            throw DataXException.asDataXException(
+                    "字段类型格式错误，期望'" + expected + "': " + input);
+        }
     }
     
     private String readIdentifier() {

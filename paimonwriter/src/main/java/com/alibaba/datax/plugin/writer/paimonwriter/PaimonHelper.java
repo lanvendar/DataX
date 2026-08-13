@@ -173,7 +173,7 @@ public class PaimonHelper {
             String type = StringUtils.trimToNull(column.getString("type"));
             Validate.notBlank(type, "column.type can't be blank");
             
-            DataType dataType = StarRocksTypeParser.parse(type);
+            DataType dataType = PaimonTypeParser.parse(type);
             String comment = StringUtils.trimToNull(column.getString(ConfigKey.COMMENT));
             if (comment == null) {
                 schemaBuilder.column(name, dataType);

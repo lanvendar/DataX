@@ -1,7 +1,9 @@
 package com.alibaba.datax.plugin.writer.paimonwriter;
 
+import com.alibaba.datax.common.element.DateColumn;
 import com.alibaba.datax.common.element.LongColumn;
 import com.alibaba.datax.common.element.StringColumn;
+import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.core.transport.record.DefaultRecord;
 import org.apache.paimon.data.Decimal;
 import org.apache.paimon.data.GenericArray;
@@ -14,10 +16,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 public class PaimonRecordConverterTest {
     
@@ -81,6 +87,65 @@ public class PaimonRecordConverterTest {
         GenericRow row = (GenericRow) value;
         Assert.assertEquals(7, row.getInt(0));
         Assert.assertEquals("bob", row.getString(1).toString());
+    }
+
+    @Test
+    public void testTimestampWithoutTimeZonePreservesShanghaiWallClock() {
+        TimeZone originalTimeZone = TimeZone.getDefault();
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("GMT+08:00"));
+            java.sql.Timestamp mysqlDateTime = java.sql.Timestamp.valueOf("2026-08-03 03:07:31");
+
+            org.apache.paimon.data.Timestamp value = (org.apache.paimon.data.Timestamp)
+                    PaimonRecordConverter.parseValue(
+                            new DateColumn(mysqlDateTime), DataTypes.TIMESTAMP(6));
+
+            Assert.assertEquals(
+                    LocalDateTime.of(2026, 8, 3, 3, 7, 31),
+                    value.toLocalDateTime());
+        } finally {
+            TimeZone.setDefault(originalTimeZone);
+        }
+    }
+
+    @Test
+    public void testTimestampWithLocalTimeZonePreservesInstant() {
+        Instant instant = Instant.parse("2026-08-02T19:07:31Z");
+
+        org.apache.paimon.data.Timestamp value = (org.apache.paimon.data.Timestamp)
+                PaimonRecordConverter.parseValue(
+                        new DateColumn(instant.toEpochMilli()),
+                        DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(6));
+
+        Assert.assertEquals(instant, value.toInstant());
+    }
+
+    @Test
+    public void testTimestampWithLocalTimeZoneRequiresExplicitOffsetForText() {
+        org.apache.paimon.data.Timestamp value = (org.apache.paimon.data.Timestamp)
+                PaimonRecordConverter.parseValue(
+                        new StringColumn("2026-08-03T03:07:31+08:00"),
+                        DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(6));
+
+        Assert.assertEquals(Instant.parse("2026-08-02T19:07:31Z"), value.toInstant());
+
+        Assert.assertThrows(
+                DateTimeParseException.class,
+                () -> PaimonRecordConverter.parseValue(
+                        new StringColumn("2026-08-03 03:07:31"),
+                        DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(6)));
+    }
+
+    @Test(expected = DataXException.class)
+    public void testTimestampAndTimestampLtzAreNotCompatible() {
+        RowType rowType = RowType.of(
+                new org.apache.paimon.types.DataType[]{DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(6)},
+                new String[]{"created_at"});
+
+        new PaimonRecordConverter(
+                Arrays.asList(new PaimonColumn("created_at", "timestamp(6)")),
+                rowType,
+                RowKind.INSERT);
     }
     
     @Test

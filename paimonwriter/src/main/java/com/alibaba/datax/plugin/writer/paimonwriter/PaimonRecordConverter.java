@@ -22,21 +22,16 @@ import org.apache.paimon.types.RowKind;
 import org.apache.paimon.types.RowType;
 
 import java.math.BigDecimal;
-import java.sql.Time;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 final class PaimonRecordConverter {
-    
-    private static final String DATE_PATTERN = "yyyy-MM-dd";
     
     private final List<PaimonColumn> columns;
     
@@ -123,7 +118,7 @@ final class PaimonRecordConverter {
                 throw DataXException.asDataXException("column字段不存在于Paimon表: " + column.getName());
             }
             
-            DataType declaredType = StarRocksTypeParser.parse(column.getType());
+            DataType declaredType = PaimonTypeParser.parse(column.getType());
             DataType tableType = rowType.getTypeAt(tableIndex);
             if (!isCompatibleType(declaredType, tableType)) {
                 throw DataXException.asDataXException(String.format(
@@ -187,16 +182,6 @@ final class PaimonRecordConverter {
     }
     
     private static boolean isCompatibleType(DataType declaredType, DataType tableType) {
-        if (isStringType(declaredType.getTypeRoot()) && isStringType(tableType.getTypeRoot())) {
-            return true;
-        }
-        if (isBinaryType(declaredType.getTypeRoot()) && isBinaryType(tableType.getTypeRoot())) {
-            return true;
-        }
-        if (declaredType.getTypeRoot() == DataTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE
-                && tableType.getTypeRoot() == DataTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE) {
-            return true;
-        }
         if (declaredType.getTypeRoot() != tableType.getTypeRoot()) {
             return false;
         }
@@ -214,16 +199,12 @@ final class PaimonRecordConverter {
                 return declaredDecimal.getPrecision() == tableDecimal.getPrecision()
                         && declaredDecimal.getScale() == tableDecimal.getScale();
             default:
-                return true;
+                return declaredType.equalsIgnoreNullable(tableType);
         }
     }
     
     private static boolean isStringType(DataTypeRoot typeRoot) {
         return typeRoot == DataTypeRoot.CHAR || typeRoot == DataTypeRoot.VARCHAR;
-    }
-    
-    private static boolean isBinaryType(DataTypeRoot typeRoot) {
-        return typeRoot == DataTypeRoot.BINARY || typeRoot == DataTypeRoot.VARBINARY;
     }
     
     private static boolean isCompatibleRow(RowType declaredType, RowType tableType) {
@@ -276,8 +257,9 @@ final class PaimonRecordConverter {
             case TIME_WITHOUT_TIME_ZONE:
                 return toTimeMillis(rawValue, column);
             case TIMESTAMP_WITHOUT_TIME_ZONE:
+                return toTimestampWithoutTimeZone(rawValue, column);
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-                return toTimestamp(rawValue, column);
+                return toTimestampWithLocalTimeZone(rawValue, column);
             case CHAR:
             case VARCHAR:
                 return BinaryString.fromString(toStringValue(rawValue));
@@ -373,49 +355,34 @@ final class PaimonRecordConverter {
     }
     
     private static int toDateEpochDay(Object value, Column column) {
-        Date date = column == null ? toDate(value, DATE_PATTERN) : column.asDate();
-        return (int) TimeUnit.MILLISECONDS.toDays(date.getTime());
+        return (int) LocalDate.parse(toTemporalText(value, column)).toEpochDay();
     }
     
     private static int toTimeMillis(Object value, Column column) {
-        if (column != null && column.getRawData() instanceof Date) {
-            Date date = column.asDate();
-            return (int) (date.getTime() % TimeUnit.DAYS.toMillis(1));
-        }
-        String text = toStringValue(value);
-        try {
-            return (int) Time.valueOf(LocalTime.parse(text)).getTime();
-        } catch (Exception ignore) {
-            return (int) Time.valueOf(text).getTime();
-        }
+        LocalTime localTime = LocalTime.parse(toTemporalText(value, column));
+        return (int) (localTime.toNanoOfDay() / 1_000_000L);
     }
     
-    private static Timestamp toTimestamp(Object value, Column column) {
-        Date date = column == null ? toDate(value, null) : column.asDate();
-        return Timestamp.fromEpochMillis(date.getTime());
+    private static Timestamp toTimestampWithoutTimeZone(Object value, Column column) {
+        String text = toTemporalText(value, column).replace(' ', 'T');
+        return Timestamp.fromLocalDateTime(LocalDateTime.parse(text));
     }
-    
-    private static Date toDate(Object value, String pattern) {
+
+    private static Timestamp toTimestampWithLocalTimeZone(Object value, Column column) {
+        if (column != null && column.getRawData() instanceof Number) {
+            return Timestamp.fromEpochMillis(column.asLong());
+        }
         if (value instanceof Date) {
-            return (Date) value;
+            return Timestamp.fromEpochMillis(((Date) value).getTime());
         }
-        if (value instanceof Number) {
-            return new Date(((Number) value).longValue());
-        }
-        String text = toStringValue(value);
-        if (DATE_PATTERN.equals(pattern)) {
-            LocalDate localDate = LocalDate.parse(text);
-            return java.sql.Date.valueOf(localDate);
-        }
-        String[] patterns = new String[]{"yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd"};
-        for (String candidate : patterns) {
-            try {
-                return new SimpleDateFormat(candidate, Locale.ROOT).parse(text);
-            } catch (ParseException ignored) {
-                // try next pattern
-            }
-        }
-        throw DataXException.asDataXException("日期时间格式无法解析: " + text);
+        // 字符串必须显式携带 UTC 偏移，禁止用本地时区猜测一个时间点。
+        String text = toStringValue(value).replace(' ', 'T');
+        return Timestamp.fromInstant(OffsetDateTime.parse(text).toInstant());
+    }
+
+    private static String toTemporalText(Object value, Column column) {
+        // DateColumn 只有 epoch millis；asString() 仅在恢复无时区墙上时间时应用 DataX 时区配置。
+        return column == null ? toStringValue(value) : column.asString();
     }
     
     private static String toStringValue(Object value) {

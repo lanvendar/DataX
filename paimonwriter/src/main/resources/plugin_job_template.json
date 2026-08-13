@@ -35,7 +35,7 @@
         "column": [
             {
                 "name": "",
-                "type": "varchar",
+                "type": "string",
                 "comment": ""
             }
         ]

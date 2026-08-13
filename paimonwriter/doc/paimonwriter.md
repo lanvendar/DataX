@@ -258,30 +258,30 @@ _id_ = UUID/SHA-256/SHA-512(joined)
 
 ## 8 类型转换
 
-| StarRocks 字段类型 | Paimon 数据类型 |
-| --- | --- |
-| `BOOLEAN`, `BOOL` | `BOOLEAN` |
-| `TINYINT`, `SMALLINT`, `INT`, `INTEGER`, `BIGINT` | `TINYINT`, `SMALLINT`, `INT`, `BIGINT` |
-| `LARGEINT` | `DECIMAL(38,0)` |
-| `FLOAT`, `DOUBLE` | `FLOAT`, `DOUBLE` |
-| `DECIMAL/DECIMALV2/DECIMAL32/DECIMAL64/DECIMAL128(p,s)` | `DECIMAL(p,s)`，省略参数时为 `DECIMAL(10,0)` |
-| `DATE`, `DATETIME`, `TIMESTAMP`, `TIME` | `DATE`, `TIMESTAMP`, `TIME` |
-| `CHAR`, `VARCHAR`, `STRING`, `JSON` | `CHAR`, `VARCHAR/STRING` |
-| `BINARY`, `VARBINARY`, `BYTEA` | `BINARY`, `VARBINARY` |
-| `ARRAY<T>` | `ARRAY<T>` |
-| `MAP<K,V>` | `MAP<K,V>` |
-| `STRUCT<field:type,...>`, `ROW<field:type,...>` | `ROW<field type,...>` |
+`column.type` 描述 Paimon 目标字段类型，不描述上游数据库或 StarRocks 字段类型。写入器只接受以下 Paimon 类型：
+
+```text
+BOOLEAN
+TINYINT | SMALLINT | INT | BIGINT
+FLOAT | DOUBLE | DECIMAL[(p[,s])]
+DATE | TIME[(p)]
+TIMESTAMP[(p)]
+TIMESTAMP[(p)] WITH LOCAL TIME ZONE
+CHAR[(n)] | VARCHAR[(n)] | STRING
+BINARY[(n)] | VARBINARY[(n)] | BYTES
+ARRAY<T> | MAP<K,V> | ROW<field type,...>
+```
+
+`TIMESTAMP(p)` 保存无时区墙上时间；`TIMESTAMP(p) WITH LOCAL TIME ZONE` 保存确定时间点，并按查询会话时区解释。`DATETIME`、`TIMESTAMP_LTZ`、`LARGEINT`、`BYTEA`、`STRUCT` 等非 Paimon 核心类型名称不会被兼容解析。
 
 复杂类型字段要求上游以 JSON 字符串传入：
 
 ```text
-ARRAY<INT>                    -> [1,2,3]
-MAP<VARCHAR,INT>              -> {"a":1,"b":2}
-STRUCT<id:INT,name:VARCHAR>   -> {"id":1,"name":"alice"}
-ROW<id:INT,name:VARCHAR>      -> [1,"alice"]
+ARRAY<INT>                 -> [1,2,3]
+MAP<STRING,INT>            -> {"a":1,"b":2}
+ROW<id INT,name STRING>    -> {"id":1,"name":"alice"}
+ROW<id INT,name STRING>    -> [1,"alice"]
 ```
-
-`BITMAP`、`HLL`、`PERCENTILE` 等 StarRocks 特殊类型暂不支持。
 
 ## 9 脏数据
 
