@@ -147,6 +147,28 @@ public class PaimonRecordConverterTest {
                 rowType,
                 RowKind.INSERT);
     }
+
+    @Test
+    public void testVarcharCanWriteToWiderVarcharAndString() {
+        List<PaimonColumn> columns = Arrays.asList(new PaimonColumn("name", "varchar(255)"));
+
+        new PaimonRecordConverter(
+                columns,
+                RowType.of(new org.apache.paimon.types.DataType[]{DataTypes.VARCHAR(500)}, new String[]{"name"}),
+                RowKind.INSERT);
+        new PaimonRecordConverter(
+                columns,
+                RowType.of(new org.apache.paimon.types.DataType[]{DataTypes.STRING()}, new String[]{"name"}),
+                RowKind.INSERT);
+    }
+
+    @Test(expected = DataXException.class)
+    public void testVarcharCannotWriteToNarrowerVarchar() {
+        new PaimonRecordConverter(
+                Arrays.asList(new PaimonColumn("name", "varchar(500)")),
+                RowType.of(new org.apache.paimon.types.DataType[]{DataTypes.VARCHAR(255)}, new String[]{"name"}),
+                RowKind.INSERT);
+    }
     
     @Test
     public void testProxyPrimaryKeyUsesEmptyStringAndConfiguredAlgorithm() {

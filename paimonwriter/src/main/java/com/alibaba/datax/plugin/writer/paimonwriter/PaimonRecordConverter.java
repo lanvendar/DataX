@@ -20,6 +20,7 @@ import org.apache.paimon.types.DecimalType;
 import org.apache.paimon.types.MapType;
 import org.apache.paimon.types.RowKind;
 import org.apache.paimon.types.RowType;
+import org.apache.paimon.types.VarCharType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -198,6 +199,8 @@ final class PaimonRecordConverter {
                 DecimalType tableDecimal = (DecimalType) tableType;
                 return declaredDecimal.getPrecision() == tableDecimal.getPrecision()
                         && declaredDecimal.getScale() == tableDecimal.getScale();
+            case VARCHAR:
+                return ((VarCharType) declaredType).getLength() <= ((VarCharType) tableType).getLength();
             default:
                 return declaredType.equalsIgnoreNullable(tableType);
         }

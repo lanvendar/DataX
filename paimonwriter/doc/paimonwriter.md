@@ -274,6 +274,8 @@ ARRAY<T> | MAP<K,V> | ROW<field type,...>
 
 `TIMESTAMP(p)` 保存无时区墙上时间；`TIMESTAMP(p) WITH LOCAL TIME ZONE` 保存确定时间点，并按查询会话时区解释。`DATETIME`、`TIMESTAMP_LTZ`、`LARGEINT`、`BYTEA`、`STRUCT` 等非 Paimon 核心类型名称不会被兼容解析。
 
+`VARCHAR(n)` 可以写入长度不小于 `n` 的目标 `VARCHAR` 字段，也可以写入 `STRING` 字段；不允许写入长度更小的目标字段。
+
 复杂类型字段要求上游以 JSON 字符串传入：
 
 ```text
