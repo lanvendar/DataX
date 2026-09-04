@@ -8,6 +8,7 @@ import com.alibaba.datax.plugin.rdbms.reader.CommonRdbmsReader;
 import com.alibaba.datax.plugin.rdbms.reader.Key;
 import com.alibaba.datax.plugin.rdbms.reader.Constant;
 import com.alibaba.datax.plugin.reader.oceanbasev10reader.OceanBaseReader;
+import com.alibaba.datax.plugin.reader.oceanbasev10reader.util.ObReaderSplitUtil;
 import com.alibaba.datax.plugin.reader.oceanbasev10reader.util.ObReaderUtils;
 import com.alibaba.datax.plugin.reader.oceanbasev10reader.util.PartitionSplitUtil;
 import com.alibaba.fastjson2.JSONObject;
@@ -57,7 +58,7 @@ public class ReaderJob extends CommonRdbmsReader.Job {
             list = PartitionSplitUtil.splitByPartition(originalConfig);
         } else {
             LOG.info("try to split reader job by splitPk.");
-            list = super.split(originalConfig, adviceNumber);
+            list = ObReaderSplitUtil.doSplit(originalConfig, adviceNumber);
         }
 
         for (Configuration config : list) {
